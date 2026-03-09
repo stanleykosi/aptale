@@ -1,0 +1,16 @@
+terminal:
+  backend: docker
+  docker_image: "python:3.11-slim"
+  container_persistent: true
+  timeout: 300
+
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+
+provider_routing:
+  sort: "price"
+  require_parameters: true
+
+code_execution:
+  timeout: 300
