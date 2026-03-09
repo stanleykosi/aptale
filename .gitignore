@@ -1,0 +1,68 @@
+# Secrets and environment files
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*token*
+*secret*
+
+# Runtime DB/state
+state.db
+*.sqlite
+*.sqlite3
+
+# Hermes local runtime spillover (if mirrored into repo paths)
+.hermes/
+hermes/.env
+hermes/state.db
+hermes/logs/
+hermes/sessions/
+hermes/cron/
+hermes/memories/
+hermes/skills/
+hermes/whatsapp/
+hermes/pairing/
+
+# WhatsApp / Baileys session and pairing artifacts
+whatsapp/session/
+whatsapp/pairing/
+**/whatsapp/session/
+**/pairing/
+*.qr
+qr.png
+qrcode.png
+
+# Generated exports/artifacts
+exports/
+generated/
+artifacts/
+tmp/
+temp/
+*.pdf
+*.csv
+
+# Logs
+*.log
+logs/
+runtime/logs/
+gateway.log
+errors.log
+
+# Python/cache/build/test artifacts
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+dist/
+build/
+*.egg-info/
+
+# OS/editor clutter
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
