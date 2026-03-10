@@ -4,7 +4,7 @@ toolsets:
 - hermes-cli
 max_turns: 100
 terminal:
-  backend: docker
+  backend: local
   cwd: .
   timeout: 300
   docker_image: python:3.11-slim
