@@ -62,3 +62,39 @@ For FX:
 
 ## 7. JSON-Only Output Reminder
 Final response must be one JSON object matching the required schema and nothing else.
+
+## 8. Extended Country Coverage Index
+### Customs files
+- `regions/usa-customs.md` (`US`)
+- `regions/canada-customs.md` (`CA`)
+- `regions/russia-customs.md` (`RU`)
+- `regions/japan-customs.md` (`JP`)
+- `regions/india-customs.md` (`IN`)
+- `regions/uk-customs.md` (`GB`)
+- `regions/uae-customs.md` (`AE`)
+- `regions/brazil-customs.md` (`BR`)
+- `regions/germany-customs.md` (`DE`)
+- `regions/france-customs.md` (`FR`)
+- `regions/italy-customs.md` (`IT`)
+- `regions/spain-customs.md` (`ES`)
+- `regions/netherlands-customs.md` (`NL`)
+- `regions/nigeria-customs.md` (`NG`)
+
+### Freight files
+- `regions/usa-freight.md` (`US`)
+- `regions/canada-freight.md` (`CA`)
+- `regions/russia-freight.md` (`RU`)
+- `regions/japan-freight.md` (`JP`)
+- `regions/india-freight.md` (`IN`)
+- `regions/uk-freight.md` (`GB`)
+- `regions/uae-freight.md` (`AE`)
+- `regions/brazil-freight.md` (`BR`)
+- `regions/germany-freight.md` (`DE`)
+- `regions/france-freight.md` (`FR`)
+- `regions/italy-freight.md` (`IT`)
+- `regions/spain-freight.md` (`ES`)
+- `regions/netherlands-freight.md` (`NL`)
+- `regions/nigeria-freight.md` (`NG`)
+- `regions/china-freight.md` (`CN`)
+- `regions/turkey-freight.md` (`TR`)
+- `regions/eu-import-lane.md` (EU lane pattern)
