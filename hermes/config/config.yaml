@@ -1,6 +1,5 @@
 model:
-  default: gpt-5.4
-  provider: nous
+  default: gemini-3-flash
 toolsets:
 - hermes-cli
 max_turns: 100
