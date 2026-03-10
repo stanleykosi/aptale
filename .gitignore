@@ -61,6 +61,8 @@ coverage.xml
 dist/
 build/
 *.egg-info/
+.venv/
+venv/
 
 # OS/editor clutter
 .DS_Store
