@@ -654,5 +654,3 @@ Key considerations:
 * Use skills for routing/procedural sourcing logic, not custom core tools, unless a capability truly requires new integrated tooling. 
 * Treat cron prompts as self-contained fresh sessions, and keep the gateway running for both WhatsApp and scheduled alerts. 
 * Keep PII out of logs and durable memory, while using `USER.md` plus Honcho for durable preference modeling.
-
-If you want, I can turn this into a tighter “Phase 1 MVP only” version with the first 15–20 implementation steps prioritized for faster code generation.

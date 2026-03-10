@@ -1,6 +1,5 @@
 # USER Profile Template (Aptale)
 
-Use this as the initial seed for `~/.hermes/memories/USER.md` after user onboarding.
 
 ## Identity
 

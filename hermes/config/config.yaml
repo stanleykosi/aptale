@@ -1,16 +1,68 @@
+model:
+  default: gpt-5.4
+  provider: nous
+toolsets:
+- hermes-cli
+max_turns: 100
 terminal:
   backend: docker
-  docker_image: "python:3.11-slim"
-  container_persistent: true
+  cwd: .
   timeout: 300
-
+  docker_image: python:3.11-slim
+  singularity_image: docker://nikolaik/python-nodejs:python3.11-nodejs20
+  modal_image: nikolaik/python-nodejs:python3.11-nodejs20
+  daytona_image: nikolaik/python-nodejs:python3.11-nodejs20
+  container_cpu: 1
+  container_memory: 5120
+  container_disk: 51200
+  container_persistent: true
+  docker_volumes: []
+browser:
+  inactivity_timeout: 120
+  record_sessions: false
+compression:
+  enabled: true
+  threshold: 0.85
+  summary_model: google/gemini-3-flash-preview
+  summary_provider: auto
+auxiliary:
+  vision:
+    provider: auto
+    model: ''
+  web_extract:
+    provider: auto
+    model: ''
+display:
+  compact: false
+  personality: kawaii
+  resume_display: full
+  bell_on_complete: false
+tts:
+  provider: edge
+  edge:
+    voice: en-US-AriaNeural
+  elevenlabs:
+    voice_id: pNInz6obpgDQGcFmaJgB
+    model_id: eleven_multilingual_v2
+  openai:
+    model: gpt-4o-mini-tts
+    voice: alloy
+stt:
+  enabled: true
+  model: whisper-1
+human_delay:
+  mode: 'off'
+  min_ms: 800
+  max_ms: 2500
 memory:
   memory_enabled: true
   user_profile_enabled: true
-
-provider_routing:
-  sort: "price"
-  require_parameters: true
-
+  memory_char_limit: 2200
+  user_char_limit: 1375
+prefill_messages_file: ''
+honcho: {}
+timezone: ''
+command_allowlist: []
+_config_version: 5
 code_execution:
   timeout: 300
