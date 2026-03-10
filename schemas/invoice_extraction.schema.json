@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aptale/schemas/invoice_extraction.schema.json",
+  "title": "InvoiceExtraction",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "extraction_id",
+    "extracted_at",
+    "source_language",
+    "target_language",
+    "invoice_number",
+    "invoice_date",
+    "incoterm",
+    "origin_country",
+    "destination_country",
+    "origin_port",
+    "destination_port",
+    "currency",
+    "subtotal",
+    "total",
+    "total_weight_kg",
+    "items",
+    "extraction_confidence",
+    "needs_user_confirmation",
+    "uncertainties"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "extraction_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "message_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "extracted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_language": {
+      "type": "string",
+      "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+    },
+    "target_language": {
+      "type": "string",
+      "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+    },
+    "invoice_number": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "invoice_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "incoterm": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Z]{3}$"
+    },
+    "origin_country": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Z]{2}$"
+    },
+    "destination_country": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Z]{2}$"
+    },
+    "origin_port": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "destination_port": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "subtotal": {
+      "type": "number",
+      "minimum": 0
+    },
+    "total": {
+      "type": "number",
+      "minimum": 0
+    },
+    "total_weight_kg": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/item"
+      }
+    },
+    "extraction_confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "needs_user_confirmation": {
+      "type": "boolean"
+    },
+    "uncertainties": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "line_id",
+        "description",
+        "quantity",
+        "unit",
+        "unit_price",
+        "line_total",
+        "weight_kg",
+        "country_of_origin",
+        "hs_code",
+        "hs_confidence"
+      ],
+      "properties": {
+        "line_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quantity": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unit_price": {
+          "type": "number",
+          "minimum": 0
+        },
+        "line_total": {
+          "type": "number",
+          "minimum": 0
+        },
+        "weight_kg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "country_of_origin": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Z]{2}$"
+        },
+        "hs_code": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9]{4,10}$"
+        },
+        "hs_confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

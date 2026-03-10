@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aptale/schemas/fx_quote.schema.json",
+  "title": "FxQuote",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "quote_id",
+    "extraction_id",
+    "base_currency",
+    "quote_currency",
+    "official_rate",
+    "parallel_rate",
+    "spread_pct",
+    "selected_rate_type",
+    "selected_rate",
+    "sources",
+    "captured_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "quote_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "extraction_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "base_currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "quote_currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "official_rate": {
+      "$ref": "#/$defs/rate"
+    },
+    "parallel_rate": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/rate"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "spread_pct": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "selected_rate_type": {
+      "type": "string",
+      "enum": [
+        "official",
+        "parallel"
+      ]
+    },
+    "selected_rate": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/source_entry"
+      }
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "selected_rate_type": {
+            "const": "parallel"
+          }
+        },
+        "required": [
+          "selected_rate_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "parallel_rate": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "rate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rate",
+        "provider_name",
+        "as_of",
+        "source_url"
+      ],
+      "properties": {
+        "rate": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "provider_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "as_of": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source_url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "source_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_url",
+        "source_title",
+        "retrieved_at",
+        "method",
+        "rate_type"
+      ],
+      "properties": {
+        "source_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "source_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retrieved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "web_search",
+            "web_extract"
+          ]
+        },
+        "rate_type": {
+          "type": "string",
+          "enum": [
+            "official",
+            "parallel"
+          ]
+        }
+      }
+    }
+  }
+}

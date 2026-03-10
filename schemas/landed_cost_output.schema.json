@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aptale/schemas/landed_cost_output.schema.json",
+  "title": "LandedCostOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "calculation_id",
+    "extraction_id",
+    "local_currency",
+    "subtotal_before_margin",
+    "profit_margin_pct",
+    "profit_amount",
+    "total_landed_cost",
+    "cost_per_unit",
+    "breakdown",
+    "source_quote_ids",
+    "disclaimer",
+    "computed_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "calculation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "extraction_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "local_currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "subtotal_before_margin": {
+      "type": "number",
+      "minimum": 0
+    },
+    "profit_margin_pct": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "profit_amount": {
+      "type": "number",
+      "minimum": 0
+    },
+    "total_landed_cost": {
+      "type": "number",
+      "minimum": 0
+    },
+    "cost_per_unit": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "breakdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invoice_local",
+        "freight_local",
+        "customs_local",
+        "margin_local"
+      ],
+      "properties": {
+        "invoice_local": {
+          "type": "number",
+          "minimum": 0
+        },
+        "freight_local": {
+          "type": "number",
+          "minimum": 0
+        },
+        "customs_local": {
+          "type": "number",
+          "minimum": 0
+        },
+        "margin_local": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "source_quote_ids": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "disclaimer": {
+      "type": "string",
+      "const": "Estimates only, subject to final customs assessment and market fluctuations."
+    },
+    "computed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

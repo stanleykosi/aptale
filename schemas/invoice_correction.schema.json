@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aptale/schemas/invoice_correction.schema.json",
+  "title": "InvoiceCorrection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "extraction_id",
+    "confirmation_status",
+    "corrected_at",
+    "correction_notes",
+    "corrections"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "extraction_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "confirmation_status": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "corrected"
+      ]
+    },
+    "corrected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "correction_notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "corrections": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/correction"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "confirmation_status": {
+            "const": "corrected"
+          }
+        },
+        "required": [
+          "confirmation_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "corrections": {
+            "minItems": 1
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "corrections": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "correction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "operation",
+        "value",
+        "reason"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^/.+"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "set",
+            "replace",
+            "remove"
+          ]
+        },
+        "value": {},
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

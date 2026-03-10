@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aptale/schemas/landed_cost_input.schema.json",
+  "title": "LandedCostInput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "extraction_id",
+    "invoice_currency",
+    "invoice_total",
+    "invoice_total_weight_kg",
+    "freight_currency",
+    "freight_quote_amount",
+    "customs_lines",
+    "fx_base_currency",
+    "fx_quote_currency",
+    "fx_selected_rate_type",
+    "fx_selected_rate",
+    "local_currency",
+    "profit_margin_pct",
+    "quote_ids",
+    "requested_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "extraction_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "invoice_currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "invoice_total": {
+      "type": "number",
+      "minimum": 0
+    },
+    "invoice_total_weight_kg": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "freight_currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "freight_quote_amount": {
+      "type": "number",
+      "minimum": 0
+    },
+    "customs_lines": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/customs_line"
+      }
+    },
+    "fx_base_currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "fx_quote_currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "fx_selected_rate_type": {
+      "type": "string",
+      "enum": [
+        "official",
+        "parallel"
+      ]
+    },
+    "fx_selected_rate": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "local_currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "profit_margin_pct": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "quote_ids": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "freight_quote_id",
+        "customs_quote_id",
+        "fx_quote_id"
+      ],
+      "properties": {
+        "freight_quote_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "customs_quote_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fx_quote_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "customs_line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "line_id",
+        "hs_code",
+        "duty_rate_pct",
+        "vat_rate_pct",
+        "additional_rate_pct",
+        "fixed_fee",
+        "fixed_fee_currency"
+      ],
+      "properties": {
+        "line_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hs_code": {
+          "type": "string",
+          "pattern": "^[0-9]{4,10}$"
+        },
+        "duty_rate_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "vat_rate_pct": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "additional_rate_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "fixed_fee": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "fixed_fee_currency": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Z]{3}$"
+        }
+      }
+    }
+  }
+}

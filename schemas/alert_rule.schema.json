@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aptale/schemas/alert_rule.schema.json",
+  "title": "AlertRule",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "alert_id",
+    "user_id",
+    "active",
+    "metric",
+    "condition",
+    "threshold",
+    "base_currency",
+    "quote_currency",
+    "route",
+    "schedule_cron",
+    "deliver",
+    "message_template",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "alert_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "user_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "metric": {
+      "type": "string",
+      "enum": [
+        "fx_parallel_rate",
+        "fx_official_rate",
+        "freight_quote_amount",
+        "landed_cost_total"
+      ]
+    },
+    "condition": {
+      "type": "string",
+      "enum": [
+        "lt",
+        "lte",
+        "gt",
+        "gte",
+        "eq"
+      ]
+    },
+    "threshold": {
+      "type": "number"
+    },
+    "base_currency": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Z]{3}$"
+    },
+    "quote_currency": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Z]{3}$"
+    },
+    "route": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "origin_country",
+        "destination_country"
+      ],
+      "properties": {
+        "origin_country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+        "destination_country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        }
+      }
+    },
+    "schedule_cron": {
+      "type": "string",
+      "minLength": 9
+    },
+    "deliver": {
+      "type": "string",
+      "enum": [
+        "origin",
+        "whatsapp",
+        "telegram",
+        "discord",
+        "slack",
+        "local"
+      ]
+    },
+    "message_template": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "metric": {
+            "enum": [
+              "fx_parallel_rate",
+              "fx_official_rate"
+            ]
+          }
+        },
+        "required": [
+          "metric"
+        ]
+      },
+      "then": {
+        "properties": {
+          "base_currency": {
+            "type": "string"
+          },
+          "quote_currency": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+}
