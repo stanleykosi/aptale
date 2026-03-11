@@ -1,0 +1,95 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "sample_pt",
+  "case_type": "success",
+  "language": "pt",
+  "whatsapp_event": {
+    "message_id": "wamid.fixture.pt.001",
+    "user_id": "2348000000007",
+    "image_base64": "c2FtcGxlLXB0LWltYWdl",
+    "caption": "Fatura comercial para envio ao mercado nigeriano"
+  },
+  "invoice_text_lines": [
+    "Fatura No: PT-INV-2026-019",
+    "Data: 2026-03-08",
+    "Incoterm: CIF",
+    "Porto de origem: Santos, BR",
+    "Porto de destino: Lagos, NG",
+    "Moeda: USD",
+    "Item 1: Pecas de compressor, quantidade 55, preco unitario 120.00, total 6600.00",
+    "Item 2: Rolamentos industriais, quantidade 140, preco unitario 27.00, total 3780.00",
+    "Subtotal: 10380.00",
+    "Total: 10820.00",
+    "Peso bruto: 455.0 kg"
+  ],
+  "expected_invoice_extraction": {
+    "schema_version": "1.0",
+    "extraction_id": "invext_fixture_pt_001",
+    "message_id": "wamid.fixture.pt.001",
+    "extracted_at": "2026-03-08T10:20:00Z",
+    "source_language": "pt",
+    "target_language": "en",
+    "invoice_number": "PT-INV-2026-019",
+    "invoice_date": "2026-03-08",
+    "incoterm": "CIF",
+    "origin_country": "BR",
+    "destination_country": "NG",
+    "origin_port": "Santos",
+    "destination_port": "Lagos",
+    "currency": "USD",
+    "subtotal": 10380.0,
+    "total": 10820.0,
+    "total_weight_kg": 455.0,
+    "items": [
+      {
+        "line_id": "1",
+        "description": "Compressor spare parts",
+        "quantity": 55,
+        "unit": "set",
+        "unit_price": 120.0,
+        "line_total": 6600.0,
+        "weight_kg": 280.0,
+        "country_of_origin": "BR",
+        "hs_code": "841490",
+        "hs_confidence": 0.84
+      },
+      {
+        "line_id": "2",
+        "description": "Industrial bearings",
+        "quantity": 140,
+        "unit": "piece",
+        "unit_price": 27.0,
+        "line_total": 3780.0,
+        "weight_kg": 175.0,
+        "country_of_origin": "BR",
+        "hs_code": "848210",
+        "hs_confidence": 0.81
+      }
+    ],
+    "extraction_confidence": 0.87,
+    "needs_user_confirmation": true,
+    "uncertainties": [
+      "translated from Portuguese source text"
+    ]
+  },
+  "clarification": {
+    "user_reply": "items[1].hs_code = \"848280\"",
+    "expected_confirmation_status": "corrected",
+    "expected_corrections": [
+      {
+        "path": "/items/1/hs_code",
+        "new_value": "848280"
+      }
+    ]
+  },
+  "routing_expectations": {
+    "origin_country": "BR",
+    "destination_country": "NG",
+    "currency": "USD",
+    "task_types": [
+      "freight",
+      "customs",
+      "fx"
+    ]
+  }
+}

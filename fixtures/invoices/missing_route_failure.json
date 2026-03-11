@@ -1,0 +1,65 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "missing_route_failure",
+  "case_type": "failure",
+  "language": "en",
+  "whatsapp_event": {
+    "message_id": "wamid.fixture.fail.002",
+    "user_id": "2348000000008",
+    "image_base64": "bWlzc2luZy1yb3V0ZS1pbWFnZQ==",
+    "caption": "Invoice image where route section is cropped out"
+  },
+  "invoice_text_lines": [
+    "Commercial Invoice",
+    "Invoice No: FAIL-ROUTE-001",
+    "Date: 2026-03-09",
+    "Subtotal: 7200.00",
+    "Total: 7560.00",
+    "Route: not visible in image crop"
+  ],
+  "mock_extraction_payload": {
+    "schema_version": "1.0",
+    "extraction_id": "invext_fixture_fail_002",
+    "extracted_at": "2026-03-09T08:10:00Z",
+    "source_language": "en",
+    "target_language": "en",
+    "invoice_number": "FAIL-ROUTE-001",
+    "invoice_date": "2026-03-09",
+    "incoterm": "FOB",
+    "origin_country": null,
+    "destination_country": "NG",
+    "origin_port": null,
+    "destination_port": "Lagos",
+    "currency": "USD",
+    "subtotal": 7200.0,
+    "total": 7560.0,
+    "total_weight_kg": 240.0,
+    "items": [
+      {
+        "line_id": "1",
+        "description": "Electrical cable rolls",
+        "quantity": 80,
+        "unit": "roll",
+        "unit_price": 90.0,
+        "line_total": 7200.0,
+        "weight_kg": 240.0,
+        "country_of_origin": "CN",
+        "hs_code": "854449",
+        "hs_confidence": 0.91
+      }
+    ],
+    "extraction_confidence": 0.67,
+    "needs_user_confirmation": true,
+    "uncertainties": [
+      "route section missing from image"
+    ]
+  },
+  "expected_failure": {
+    "code": "missing_route",
+    "image_quality_score": 0.88,
+    "required_user_guidance": [
+      "Reply with origin and destination countries and ports",
+      "Or upload a clearer image showing route details"
+    ]
+  }
+}

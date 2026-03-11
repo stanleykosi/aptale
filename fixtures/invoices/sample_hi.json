@@ -1,0 +1,96 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "sample_hi",
+  "case_type": "success",
+  "language": "hi",
+  "whatsapp_event": {
+    "message_id": "wamid.fixture.hi.001",
+    "user_id": "2348000000006",
+    "image_base64": "c2FtcGxlLWhpLWltYWdl",
+    "caption": "Vyaparik invoice image, landed cost nikalo"
+  },
+  "invoice_text_lines": [
+    "Invoice No: HI-INV-2026-031",
+    "Date: 2026-03-07",
+    "Incoterm: FOB",
+    "Origin Port: Nhava Sheva, IN",
+    "Destination Port: Lagos, NG",
+    "Currency: USD",
+    "Item 1: Pharma packaging film, qty 90, unit price 52.00, line total 4680.00",
+    "Item 2: Tablet blister foil, qty 130, unit price 31.00, line total 4030.00",
+    "Subtotal: 8710.00",
+    "Total: 9135.00",
+    "Gross Weight: 305.5 kg"
+  ],
+  "expected_invoice_extraction": {
+    "schema_version": "1.0",
+    "extraction_id": "invext_fixture_hi_001",
+    "message_id": "wamid.fixture.hi.001",
+    "extracted_at": "2026-03-07T08:55:00Z",
+    "source_language": "hi",
+    "target_language": "en",
+    "invoice_number": "HI-INV-2026-031",
+    "invoice_date": "2026-03-07",
+    "incoterm": "FOB",
+    "origin_country": "IN",
+    "destination_country": "NG",
+    "origin_port": "Nhava Sheva",
+    "destination_port": "Lagos",
+    "currency": "USD",
+    "subtotal": 8710.0,
+    "total": 9135.0,
+    "total_weight_kg": 305.5,
+    "items": [
+      {
+        "line_id": "1",
+        "description": "Pharma packaging film",
+        "quantity": 90,
+        "unit": "roll",
+        "unit_price": 52.0,
+        "line_total": 4680.0,
+        "weight_kg": 170.5,
+        "country_of_origin": "IN",
+        "hs_code": "392190",
+        "hs_confidence": 0.87
+      },
+      {
+        "line_id": "2",
+        "description": "Tablet blister foil",
+        "quantity": 130,
+        "unit": "roll",
+        "unit_price": 31.0,
+        "line_total": 4030.0,
+        "weight_kg": 135.0,
+        "country_of_origin": "IN",
+        "hs_code": "760720",
+        "hs_confidence": 0.83
+      }
+    ],
+    "extraction_confidence": 0.88,
+    "needs_user_confirmation": true,
+    "uncertainties": [
+      "translated from Hindi source text",
+      "destination_port should be user-confirmed"
+    ]
+  },
+  "clarification": {
+    "user_reply": "destination_port = \"Tin Can Island\"",
+    "expected_confirmation_status": "corrected",
+    "expected_corrections": [
+      {
+        "path": "/destination_port",
+        "new_value": "Tin Can Island"
+      }
+    ]
+  },
+  "routing_expectations": {
+    "origin_country": "IN",
+    "destination_country": "NG",
+    "currency": "USD",
+    "task_types": [
+      "freight",
+      "customs",
+      "fx"
+    ]
+  }
+}

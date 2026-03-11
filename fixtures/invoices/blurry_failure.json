@@ -1,0 +1,68 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "blurry_failure",
+  "case_type": "failure",
+  "language": "unknown",
+  "whatsapp_event": {
+    "message_id": "wamid.fixture.fail.001",
+    "user_id": "2348000000004",
+    "image_base64": "Ymx1cnJ5LWltYWdlLWJ5dGVz",
+    "caption": "Invoice photo is low quality and partially cropped"
+  },
+  "invoice_text_lines": [
+    "Commercial Invoice",
+    "No: unreadable",
+    "Origin: ???",
+    "Destination: ???",
+    "Subtotal: unreadable",
+    "Total: unreadable"
+  ],
+  "mock_extraction_payload": {
+    "schema_version": "1.0",
+    "extraction_id": "invext_fixture_fail_001",
+    "extracted_at": "2026-03-06T08:40:00Z",
+    "source_language": "en",
+    "target_language": "en",
+    "invoice_number": null,
+    "invoice_date": null,
+    "incoterm": null,
+    "origin_country": null,
+    "destination_country": null,
+    "origin_port": null,
+    "destination_port": null,
+    "currency": "USD",
+    "subtotal": 0.0,
+    "total": 0.0,
+    "total_weight_kg": null,
+    "items": [
+      {
+        "line_id": "1",
+        "description": "unreadable line",
+        "quantity": 1,
+        "unit": "unknown",
+        "unit_price": 0.0,
+        "line_total": 0.0,
+        "weight_kg": null,
+        "country_of_origin": null,
+        "hs_code": null,
+        "hs_confidence": null
+      }
+    ],
+    "extraction_confidence": 0.21,
+    "needs_user_confirmation": true,
+    "uncertainties": [
+      "blurry image",
+      "subtotal unreadable",
+      "destination unreadable",
+      "hs code uncertain"
+    ]
+  },
+  "expected_failure": {
+    "code": "blurry_image",
+    "image_quality_score": 0.29,
+    "required_user_guidance": [
+      "Upload a clearer invoice photo",
+      "Or type route and totals manually"
+    ]
+  }
+}

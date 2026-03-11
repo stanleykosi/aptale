@@ -1,0 +1,95 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "sample_tr",
+  "case_type": "success",
+  "language": "tr",
+  "whatsapp_event": {
+    "message_id": "wamid.fixture.tr.001",
+    "user_id": "2348000000003",
+    "image_base64": "c2FtcGxlLXRyLWltYWdl",
+    "caption": "Fatura gorseli, toplam maliyeti hesapla"
+  },
+  "invoice_text_lines": [
+    "Fatura No: TR-INV-2026-014",
+    "Tarih: 2026-03-05",
+    "Teslim Sekli: CIF",
+    "Cikis Limani: Istanbul, TR",
+    "Varis Limani: Lagos, NG",
+    "Para Birimi: USD",
+    "Kalem 1: Tekstil makinasi parcasi, adet 40, birim 180.00, toplam 7200.00",
+    "Kalem 2: Endustriyel valf, adet 60, birim 95.00, toplam 5700.00",
+    "Ara Toplam: 12900.00",
+    "Genel Toplam: 13450.00",
+    "Toplam Agirlik: 510.0 kg"
+  ],
+  "expected_invoice_extraction": {
+    "schema_version": "1.0",
+    "extraction_id": "invext_fixture_tr_001",
+    "message_id": "wamid.fixture.tr.001",
+    "extracted_at": "2026-03-05T11:15:00Z",
+    "source_language": "tr",
+    "target_language": "en",
+    "invoice_number": "TR-INV-2026-014",
+    "invoice_date": "2026-03-05",
+    "incoterm": "CIF",
+    "origin_country": "TR",
+    "destination_country": "NG",
+    "origin_port": "Istanbul",
+    "destination_port": "Lagos",
+    "currency": "USD",
+    "subtotal": 12900.0,
+    "total": 13450.0,
+    "total_weight_kg": 510.0,
+    "items": [
+      {
+        "line_id": "1",
+        "description": "Textile machinery spare parts",
+        "quantity": 40,
+        "unit": "piece",
+        "unit_price": 180.0,
+        "line_total": 7200.0,
+        "weight_kg": 290.0,
+        "country_of_origin": "TR",
+        "hs_code": "844839",
+        "hs_confidence": 0.86
+      },
+      {
+        "line_id": "2",
+        "description": "Industrial valves",
+        "quantity": 60,
+        "unit": "piece",
+        "unit_price": 95.0,
+        "line_total": 5700.0,
+        "weight_kg": 220.0,
+        "country_of_origin": "TR",
+        "hs_code": "848180",
+        "hs_confidence": 0.82
+      }
+    ],
+    "extraction_confidence": 0.88,
+    "needs_user_confirmation": true,
+    "uncertainties": [
+      "hs_code for line 2 should be user-verified"
+    ]
+  },
+  "clarification": {
+    "user_reply": "items[1].hs_code = \"848190\"",
+    "expected_confirmation_status": "corrected",
+    "expected_corrections": [
+      {
+        "path": "/items/1/hs_code",
+        "new_value": "848190"
+      }
+    ]
+  },
+  "routing_expectations": {
+    "origin_country": "TR",
+    "destination_country": "NG",
+    "currency": "USD",
+    "task_types": [
+      "freight",
+      "customs",
+      "fx"
+    ]
+  }
+}

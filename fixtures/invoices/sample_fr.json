@@ -1,0 +1,89 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "sample_fr",
+  "case_type": "success",
+  "language": "fr",
+  "whatsapp_event": {
+    "message_id": "wamid.fixture.fr.001",
+    "user_id": "2348000000005",
+    "image_base64": "c2FtcGxlLWZyLWltYWdl",
+    "caption": "Facture commerciale pour importation au Nigeria"
+  },
+  "invoice_text_lines": [
+    "Facture No: FR-INV-2026-021",
+    "Date: 2026-03-06",
+    "Incoterm: CFR",
+    "Port de depart: Marseille, FR",
+    "Port d'arrivee: Lagos, NG",
+    "Devise: EUR",
+    "Ligne 1: Pompes industrielles, quantite 35, prix unitaire 280.00, total 9800.00",
+    "Ligne 2: Connecteurs electriques, quantite 400, prix unitaire 14.00, total 5600.00",
+    "Sous-total: 15400.00",
+    "Total: 16080.00",
+    "Poids brut: 610.0 kg"
+  ],
+  "expected_invoice_extraction": {
+    "schema_version": "1.0",
+    "extraction_id": "invext_fixture_fr_001",
+    "message_id": "wamid.fixture.fr.001",
+    "extracted_at": "2026-03-06T09:10:00Z",
+    "source_language": "fr",
+    "target_language": "en",
+    "invoice_number": "FR-INV-2026-021",
+    "invoice_date": "2026-03-06",
+    "incoterm": "CFR",
+    "origin_country": "FR",
+    "destination_country": "NG",
+    "origin_port": "Marseille",
+    "destination_port": "Lagos",
+    "currency": "EUR",
+    "subtotal": 15400.0,
+    "total": 16080.0,
+    "total_weight_kg": 610.0,
+    "items": [
+      {
+        "line_id": "1",
+        "description": "Industrial pumps",
+        "quantity": 35,
+        "unit": "piece",
+        "unit_price": 280.0,
+        "line_total": 9800.0,
+        "weight_kg": 470.0,
+        "country_of_origin": "FR",
+        "hs_code": "841370",
+        "hs_confidence": 0.88
+      },
+      {
+        "line_id": "2",
+        "description": "Electrical connectors",
+        "quantity": 400,
+        "unit": "piece",
+        "unit_price": 14.0,
+        "line_total": 5600.0,
+        "weight_kg": 140.0,
+        "country_of_origin": "FR",
+        "hs_code": "853690",
+        "hs_confidence": 0.85
+      }
+    ],
+    "extraction_confidence": 0.89,
+    "needs_user_confirmation": true,
+    "uncertainties": [
+      "translated from French source text"
+    ]
+  },
+  "clarification": {
+    "user_reply": "Confirmed",
+    "expected_confirmation_status": "confirmed"
+  },
+  "routing_expectations": {
+    "origin_country": "FR",
+    "destination_country": "NG",
+    "currency": "EUR",
+    "task_types": [
+      "freight",
+      "customs",
+      "fx"
+    ]
+  }
+}

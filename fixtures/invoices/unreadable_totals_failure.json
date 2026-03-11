@@ -1,0 +1,66 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "unreadable_totals_failure",
+  "case_type": "failure",
+  "language": "en",
+  "whatsapp_event": {
+    "message_id": "wamid.fixture.fail.003",
+    "user_id": "2348000000009",
+    "image_base64": "dW5yZWFkYWJsZS10b3RhbHMtaW1hZ2U=",
+    "caption": "Totals section is smudged and unreadable"
+  },
+  "invoice_text_lines": [
+    "Commercial Invoice",
+    "Invoice No: FAIL-TOTAL-001",
+    "Origin: Istanbul, TR",
+    "Destination: Lagos, NG",
+    "Subtotal: ***",
+    "Total: ***"
+  ],
+  "mock_extraction_payload": {
+    "schema_version": "1.0",
+    "extraction_id": "invext_fixture_fail_003",
+    "extracted_at": "2026-03-09T08:30:00Z",
+    "source_language": "en",
+    "target_language": "en",
+    "invoice_number": "FAIL-TOTAL-001",
+    "invoice_date": "2026-03-09",
+    "incoterm": "CIF",
+    "origin_country": "TR",
+    "destination_country": "NG",
+    "origin_port": "Istanbul",
+    "destination_port": "Lagos",
+    "currency": "USD",
+    "subtotal": 0.0,
+    "total": 0.0,
+    "total_weight_kg": 380.0,
+    "items": [
+      {
+        "line_id": "1",
+        "description": "Industrial fittings",
+        "quantity": 120,
+        "unit": "piece",
+        "unit_price": 34.0,
+        "line_total": 4080.0,
+        "weight_kg": 380.0,
+        "country_of_origin": "TR",
+        "hs_code": "730799",
+        "hs_confidence": 0.9
+      }
+    ],
+    "extraction_confidence": 0.61,
+    "needs_user_confirmation": true,
+    "uncertainties": [
+      "subtotal unreadable",
+      "total unreadable"
+    ]
+  },
+  "expected_failure": {
+    "code": "unreadable_totals",
+    "image_quality_score": 0.84,
+    "required_user_guidance": [
+      "Reply with subtotal and total values plus currency",
+      "Or upload a clearer image where totals are visible"
+    ]
+  }
+}

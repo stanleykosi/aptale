@@ -1,0 +1,66 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "uncertain_hs_failure",
+  "case_type": "failure",
+  "language": "en",
+  "whatsapp_event": {
+    "message_id": "wamid.fixture.fail.004",
+    "user_id": "2348000000010",
+    "image_base64": "dW5jZXJ0YWluLWhzLWltYWdl",
+    "caption": "Item descriptions are vague; HS code likely uncertain"
+  },
+  "invoice_text_lines": [
+    "Commercial Invoice",
+    "Invoice No: FAIL-HS-001",
+    "Origin: Santos, BR",
+    "Destination: Lagos, NG",
+    "Line 1: mixed machine accessories, qty 200",
+    "Subtotal: 4900.00",
+    "Total: 5200.00"
+  ],
+  "mock_extraction_payload": {
+    "schema_version": "1.0",
+    "extraction_id": "invext_fixture_fail_004",
+    "extracted_at": "2026-03-09T08:45:00Z",
+    "source_language": "en",
+    "target_language": "en",
+    "invoice_number": "FAIL-HS-001",
+    "invoice_date": "2026-03-09",
+    "incoterm": "FOB",
+    "origin_country": "BR",
+    "destination_country": "NG",
+    "origin_port": "Santos",
+    "destination_port": "Lagos",
+    "currency": "USD",
+    "subtotal": 4900.0,
+    "total": 5200.0,
+    "total_weight_kg": 190.0,
+    "items": [
+      {
+        "line_id": "1",
+        "description": "Mixed machine accessories",
+        "quantity": 200,
+        "unit": "piece",
+        "unit_price": 24.5,
+        "line_total": 4900.0,
+        "weight_kg": 190.0,
+        "country_of_origin": "BR",
+        "hs_code": null,
+        "hs_confidence": 0.42
+      }
+    ],
+    "extraction_confidence": 0.64,
+    "needs_user_confirmation": true,
+    "uncertainties": [
+      "item description too broad for tariff classification"
+    ]
+  },
+  "expected_failure": {
+    "code": "uncertain_hs_code",
+    "image_quality_score": 0.9,
+    "required_user_guidance": [
+      "Reply with the correct HS code for each line item",
+      "Or provide clearer item descriptions/spec sheets for re-extraction"
+    ]
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "sample_cn",
+  "case_type": "success",
+  "language": "zh",
+  "whatsapp_event": {
+    "message_id": "wamid.fixture.cn.001",
+    "user_id": "2348000000002",
+    "image_base64": "c2FtcGxlLWNuLWltYWdl",
+    "caption": "Fapiao tupian, qing jisuan daogang chengben"
+  },
+  "invoice_text_lines": [
+    "Fapiao hao: CN-INV-2026-008",
+    "Riqi: 2026-03-04",
+    "Maoyitiaokuan: FOB",
+    "Qigang: Ningbo, CN",
+    "Mudi gang: Lagos, NG",
+    "Huobi: USD",
+    "Huo pin 1: LED zhaoming mozu, shuliang 120, danjia 60.00, xiaoji 7200.00",
+    "Huo pin 2: Gongye chuanganqi, shuliang 80, danjia 40.00, xiaoji 3200.00",
+    "Xiaoji: 10400.00",
+    "Heji: 10985.00",
+    "Zong zhongliang: 360.0 kg"
+  ],
+  "expected_invoice_extraction": {
+    "schema_version": "1.0",
+    "extraction_id": "invext_fixture_cn_001",
+    "message_id": "wamid.fixture.cn.001",
+    "extracted_at": "2026-03-04T09:30:00Z",
+    "source_language": "zh",
+    "target_language": "en",
+    "invoice_number": "CN-INV-2026-008",
+    "invoice_date": "2026-03-04",
+    "incoterm": "FOB",
+    "origin_country": "CN",
+    "destination_country": "NG",
+    "origin_port": "Ningbo",
+    "destination_port": "Lagos",
+    "currency": "USD",
+    "subtotal": 10400.0,
+    "total": 10985.0,
+    "total_weight_kg": 360.0,
+    "items": [
+      {
+        "line_id": "1",
+        "description": "LED lighting modules",
+        "quantity": 120,
+        "unit": "piece",
+        "unit_price": 60.0,
+        "line_total": 7200.0,
+        "weight_kg": 210.0,
+        "country_of_origin": "CN",
+        "hs_code": "940540",
+        "hs_confidence": 0.89
+      },
+      {
+        "line_id": "2",
+        "description": "Industrial sensors",
+        "quantity": 80,
+        "unit": "piece",
+        "unit_price": 40.0,
+        "line_total": 3200.0,
+        "weight_kg": 150.0,
+        "country_of_origin": "CN",
+        "hs_code": "903180",
+        "hs_confidence": 0.84
+      }
+    ],
+    "extraction_confidence": 0.9,
+    "needs_user_confirmation": true,
+    "uncertainties": [
+      "translated from Chinese source text"
+    ]
+  },
+  "clarification": {
+    "user_reply": "destination_port = \"Tin Can Island\"",
+    "expected_confirmation_status": "corrected",
+    "expected_corrections": [
+      {
+        "path": "/destination_port",
+        "new_value": "Tin Can Island"
+      }
+    ]
+  },
+  "routing_expectations": {
+    "origin_country": "CN",
+    "destination_country": "NG",
+    "currency": "USD",
+    "task_types": [
+      "freight",
+      "customs",
+      "fx"
+    ]
+  }
+}

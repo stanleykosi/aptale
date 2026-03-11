@@ -1,0 +1,87 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "sample_en",
+  "case_type": "success",
+  "language": "en",
+  "whatsapp_event": {
+    "message_id": "wamid.fixture.en.001",
+    "user_id": "2348000000001",
+    "image_base64": "c2FtcGxlLWVuLWltYWdl",
+    "caption": "Commercial invoice for electronics shipment"
+  },
+  "invoice_text_lines": [
+    "Commercial Invoice No: EN-INV-2026-001",
+    "Date: 2026-03-03",
+    "Incoterm: FOB",
+    "Origin: Shanghai, CN",
+    "Destination: Lagos, NG",
+    "Currency: USD",
+    "Line 1: USB-C adapters, qty 200, unit price 25.00, total 5000.00",
+    "Line 2: Lithium battery modules, qty 150, unit price 50.00, total 7500.00",
+    "Subtotal: 12500.00",
+    "Total: 13240.00",
+    "Gross Weight: 420.5 kg"
+  ],
+  "expected_invoice_extraction": {
+    "schema_version": "1.0",
+    "extraction_id": "invext_fixture_en_001",
+    "message_id": "wamid.fixture.en.001",
+    "extracted_at": "2026-03-03T10:00:00Z",
+    "source_language": "en",
+    "target_language": "en",
+    "invoice_number": "EN-INV-2026-001",
+    "invoice_date": "2026-03-03",
+    "incoterm": "FOB",
+    "origin_country": "CN",
+    "destination_country": "NG",
+    "origin_port": "Shanghai",
+    "destination_port": "Lagos",
+    "currency": "USD",
+    "subtotal": 12500.0,
+    "total": 13240.0,
+    "total_weight_kg": 420.5,
+    "items": [
+      {
+        "line_id": "1",
+        "description": "USB-C adapters",
+        "quantity": 200,
+        "unit": "piece",
+        "unit_price": 25.0,
+        "line_total": 5000.0,
+        "weight_kg": 140.0,
+        "country_of_origin": "CN",
+        "hs_code": "850440",
+        "hs_confidence": 0.92
+      },
+      {
+        "line_id": "2",
+        "description": "Lithium battery modules",
+        "quantity": 150,
+        "unit": "piece",
+        "unit_price": 50.0,
+        "line_total": 7500.0,
+        "weight_kg": 280.5,
+        "country_of_origin": "CN",
+        "hs_code": "850760",
+        "hs_confidence": 0.9
+      }
+    ],
+    "extraction_confidence": 0.93,
+    "needs_user_confirmation": true,
+    "uncertainties": []
+  },
+  "clarification": {
+    "user_reply": "Confirmed",
+    "expected_confirmation_status": "confirmed"
+  },
+  "routing_expectations": {
+    "origin_country": "CN",
+    "destination_country": "NG",
+    "currency": "USD",
+    "task_types": [
+      "freight",
+      "customs",
+      "fx"
+    ]
+  }
+}
