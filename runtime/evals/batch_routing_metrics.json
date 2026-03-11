@@ -1,0 +1,130 @@
+{
+  "dataset_file": "/home/stanley/aptale/data/eval_invoices.jsonl",
+  "evaluated_cases": 12,
+  "extraction_confirmation": {
+    "pass": 12,
+    "fail": 0
+  },
+  "sourcing_readiness": {
+    "pass": 12,
+    "fail": 0
+  },
+  "delegation_trigger": {
+    "pass": 12,
+    "fail": 0
+  },
+  "subagent_json_shape": {
+    "pass": 12,
+    "fail": 0
+  },
+  "cases": [
+    {
+      "id": "eval_clarify_en_001",
+      "stage": "clarification",
+      "fixture": "fixtures/invoices/sample_en.json",
+      "extraction_confirmation": true,
+      "sourcing_readiness": true,
+      "delegation_triggered": true,
+      "subagent_json_shape_valid": true
+    },
+    {
+      "id": "eval_clarify_cn_001",
+      "stage": "clarification",
+      "fixture": "fixtures/invoices/sample_cn.json",
+      "extraction_confirmation": true,
+      "sourcing_readiness": true,
+      "delegation_triggered": true,
+      "subagent_json_shape_valid": true
+    },
+    {
+      "id": "eval_clarify_tr_001",
+      "stage": "clarification",
+      "fixture": "fixtures/invoices/sample_tr.json",
+      "extraction_confirmation": true,
+      "sourcing_readiness": true,
+      "delegation_triggered": true,
+      "subagent_json_shape_valid": true
+    },
+    {
+      "id": "eval_route_en_001",
+      "stage": "routing_readiness",
+      "fixture": "fixtures/invoices/sample_en.json",
+      "extraction_confirmation": true,
+      "sourcing_readiness": true,
+      "delegation_triggered": true,
+      "subagent_json_shape_valid": true
+    },
+    {
+      "id": "eval_route_cn_001",
+      "stage": "routing_readiness",
+      "fixture": "fixtures/invoices/sample_cn.json",
+      "extraction_confirmation": true,
+      "sourcing_readiness": true,
+      "delegation_triggered": true,
+      "subagent_json_shape_valid": true
+    },
+    {
+      "id": "eval_route_tr_001",
+      "stage": "routing_readiness",
+      "fixture": "fixtures/invoices/sample_tr.json",
+      "extraction_confirmation": true,
+      "sourcing_readiness": true,
+      "delegation_triggered": true,
+      "subagent_json_shape_valid": true
+    },
+    {
+      "id": "eval_clarify_fr_001",
+      "stage": "clarification",
+      "fixture": "fixtures/invoices/sample_fr.json",
+      "extraction_confirmation": true,
+      "sourcing_readiness": true,
+      "delegation_triggered": true,
+      "subagent_json_shape_valid": true
+    },
+    {
+      "id": "eval_clarify_hi_001",
+      "stage": "clarification",
+      "fixture": "fixtures/invoices/sample_hi.json",
+      "extraction_confirmation": true,
+      "sourcing_readiness": true,
+      "delegation_triggered": true,
+      "subagent_json_shape_valid": true
+    },
+    {
+      "id": "eval_clarify_pt_001",
+      "stage": "clarification",
+      "fixture": "fixtures/invoices/sample_pt.json",
+      "extraction_confirmation": true,
+      "sourcing_readiness": true,
+      "delegation_triggered": true,
+      "subagent_json_shape_valid": true
+    },
+    {
+      "id": "eval_route_fr_001",
+      "stage": "routing_readiness",
+      "fixture": "fixtures/invoices/sample_fr.json",
+      "extraction_confirmation": true,
+      "sourcing_readiness": true,
+      "delegation_triggered": true,
+      "subagent_json_shape_valid": true
+    },
+    {
+      "id": "eval_route_hi_001",
+      "stage": "routing_readiness",
+      "fixture": "fixtures/invoices/sample_hi.json",
+      "extraction_confirmation": true,
+      "sourcing_readiness": true,
+      "delegation_triggered": true,
+      "subagent_json_shape_valid": true
+    },
+    {
+      "id": "eval_route_pt_001",
+      "stage": "routing_readiness",
+      "fixture": "fixtures/invoices/sample_pt.json",
+      "extraction_confirmation": true,
+      "sourcing_readiness": true,
+      "delegation_triggered": true,
+      "subagent_json_shape_valid": true
+    }
+  ]
+}
