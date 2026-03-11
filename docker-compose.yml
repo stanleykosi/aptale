@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  aptale-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aptale-gateway
+    restart: unless-stopped
+    init: true
+    command: ["bash", "-lc", "hermes gateway"]
+    env_file:
+      - .env
+      - deploy/env/provider.env.example
+      - deploy/env/browserbase.env.example
+      - deploy/env/honcho.env.example
+      - deploy/env/whatsapp.env.example
+    volumes:
+      - aptale_hermes_home:/home/aptale/.hermes
+      - aptale_runtime:/opt/aptale/runtime
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'hermes gateway' >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    stop_grace_period: 45s
+
+volumes:
+  aptale_hermes_home:
+  aptale_runtime:
