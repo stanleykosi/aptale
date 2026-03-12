@@ -15,6 +15,8 @@ Use this skill for delegated sourcing tasks that must return one of these canoni
 - `freight_quote`
 - `customs_quote`
 - `fx_quote`
+- `local_charge_quote`
+- `risk_note_quote`
 
 Load this skill only after parent validation is complete and task context includes:
 - `task_type`
@@ -35,6 +37,8 @@ Load this skill only after parent validation is complete and task context includ
 - `freight`: map route pair to freight portal strategy.
 - `customs`: map destination country to official customs strategy.
 - `fx`: use open-web rate sourcing strategy.
+- `local_charges`: source destination local terminal/handling/clearance charges in local currency.
+- `risk_notes`: source lane disruption/compliance advisories (advisory-only leg).
 3. Apply the Browserbase/open-web decision rules below.
 4. Produce final output in the required schema with citations and retrieval metadata.
 
@@ -57,6 +61,16 @@ For lane examples and query patterns, read `docs/router-examples.md`.
 ### FX (`task_type=fx`)
 - Use open-web discovery (`web_search`, `web_extract`) as canonical path.
 - Return official rate and parallel rate (if available), clearly labeled by source type.
+
+### Local Charges (`task_type=local_charges`)
+- Prioritize official destination sources (ports, terminals, customs/authority schedules).
+- Return destination-local-currency totals and line items.
+- If primary source path fails (portal outage/CAPTCHA), switch to open-web discovery with citations.
+
+### Risk Notes (`task_type=risk_notes`)
+- Source recent lane advisories: congestion, disruption, compliance, strike/weather risks.
+- Return concise advisory notes with severity and recommendations.
+- This leg is advisory; still requires strict JSON and citation completeness.
 
 ## Browserbase vs Open-Web Decision Rules
 Use Browserbase when any of the following is true:
@@ -95,6 +109,8 @@ For FX:
 - Freight: return payload compliant with `freight_quote` schema.
 - Customs: return payload compliant with `customs_quote` schema.
 - FX: return payload compliant with `fx_quote` schema.
+- Local charges: return payload compliant with `local_charge_quote` schema.
+- Risk notes: return payload compliant with `risk_note_quote` schema.
 
 Output must be a single valid JSON object and must not include any explanatory text.
 

@@ -23,9 +23,10 @@ def build_sourcing_tasks(
     extraction_status: str,
     route_status: str,
     subagent_model: str | None = None,
+    source_strategy_by_task: Mapping[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     """
-    Build exactly three sourcing tasks: freight, customs, and fx.
+    Build canonical sourcing tasks: freight, customs, fx, local charges, risk notes.
 
     This function is fail-fast by design: it only runs after extraction is
     validated and route inference is resolved.
@@ -52,6 +53,8 @@ def build_sourcing_tasks(
     weight_label = "unknown weight" if total_weight is None else f"{total_weight:.2f} kg"
 
     tasks: list[dict[str, Any]] = []
+    strategy_map = _normalize_source_strategy_map(source_strategy_by_task)
+
     task_specs = (
         (
             "freight",
@@ -81,6 +84,24 @@ def build_sourcing_tasks(
                 "matching fx_quote schema."
             ),
         ),
+        (
+            "local_charges",
+            "Find destination local charges for handling/clearance/terminal operations.",
+            ["browser", "web"],
+            (
+                f"Find local charges for destination {extraction['destination_country']} on route {route}. "
+                f"Return strict JSON only matching local_charge_quote schema in {local}."
+            ),
+        ),
+        (
+            "risk_notes",
+            "Find current disruption and compliance risks for this lane.",
+            ["web"],
+            (
+                f"Find lane risk notes for {route}. Include operational/compliance disruptions. "
+                "Return strict JSON only matching risk_note_quote schema."
+            ),
+        ),
     )
 
     for task_type, title, toolsets, goal in task_specs:
@@ -104,12 +125,15 @@ def build_sourcing_tasks(
             "context": context,
             "toolsets": toolsets,
         }
+        strategy = strategy_map.get(task_type)
+        if strategy is not None:
+            task["source_strategy"] = strategy
         if subagent_model:
             task["model"] = subagent_model
         tasks.append(task)
 
-    if len(tasks) != 3:
-        raise DelegationBuildError("Delegation planner must produce exactly three tasks.")
+    if len(tasks) != 5:
+        raise DelegationBuildError("Delegation planner must produce exactly five tasks.")
     return tasks
 
 
@@ -120,3 +144,26 @@ def _route_summary(extraction: Mapping[str, Any]) -> str:
     destination_port = extraction.get("destination_port") or "unknown port"
     return f"{origin_country} ({origin_port}) to {destination_country} ({destination_port})"
 
+
+def _normalize_source_strategy_map(
+    source_strategy_by_task: Mapping[str, str] | None,
+) -> dict[str, str]:
+    if source_strategy_by_task is None:
+        return {}
+    if not isinstance(source_strategy_by_task, Mapping):
+        raise DelegationBuildError("source_strategy_by_task must be a mapping when provided.")
+
+    allowed_tasks = {"freight", "customs", "fx", "local_charges", "risk_notes"}
+    normalized: dict[str, str] = {}
+    for task_type, strategy in source_strategy_by_task.items():
+        task = str(task_type).strip()
+        if task not in allowed_tasks:
+            raise DelegationBuildError(f"Unsupported source strategy task_type: {task_type!r}.")
+        value = str(strategy).strip().lower()
+        if value not in {"default", "open_web_only"}:
+            raise DelegationBuildError(
+                f"Unsupported source strategy {strategy!r} for task {task!r}. "
+                "Expected 'default' or 'open_web_only'."
+            )
+        normalized[task] = value
+    return normalized

@@ -87,12 +87,15 @@ def _valid_landed_cost_input() -> dict:
         "fx_quote_currency": "ngn",
         "fx_selected_rate_type": "parallel",
         "fx_selected_rate": 1450.25,
+        "local_charges_currency": "ngn",
+        "local_charges_amount": 0,
         "local_currency": "ngn",
         "profit_margin_pct": 15,
         "quote_ids": {
             "freight_quote_id": "fq_001",
             "customs_quote_id": "cq_001",
             "fx_quote_id": "xq_001",
+            "local_charges_quote_id": "lq_001",
         },
         "requested_at": "2026-03-10T00:00:00Z",
     }
@@ -139,4 +142,3 @@ def test_validate_landed_cost_input_rejects_partial_fixed_fee_pair() -> None:
     payload["customs_lines"][0]["fixed_fee_currency"] = None
     with pytest.raises(PartialPayloadError):
         validate_landed_cost_input(payload)
-

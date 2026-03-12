@@ -210,10 +210,66 @@ def _build_delegate_outputs(
         "captured_at": "2026-03-11T08:00:00Z",
     }
 
+    local_charges_payload = {
+        "schema_version": "1.0",
+        "quote_id": f"lq_{extraction_id}",
+        "extraction_id": extraction_id,
+        "destination_country": destination_country,
+        "currency": local_currency,
+        "total_amount": 5000.0,
+        "lines": [
+            {
+                "name": "terminal_handling",
+                "amount": 5000.0,
+                "currency": local_currency,
+                "notes": None,
+            }
+        ],
+        "source_type": "official_portal",
+        "sources": [
+            {
+                "source_url": "https://local.example/charges",
+                "source_title": "Local Charges",
+                "retrieved_at": "2026-03-11T08:00:00Z",
+                "method": "web_extract",
+            }
+        ],
+        "captured_at": "2026-03-11T08:00:00Z",
+    }
+
+    risk_notes_payload = {
+        "schema_version": "1.0",
+        "quote_id": f"rq_{extraction_id}",
+        "extraction_id": extraction_id,
+        "destination_country": destination_country,
+        "risk_level": "medium",
+        "notes": [
+            {
+                "code": "port_congestion",
+                "title": "Port Congestion",
+                "description": "Moderate congestion expected this week.",
+                "impact_level": "medium",
+                "recommendation": "Book discharge slots early.",
+            }
+        ],
+        "source_type": "trade_advisory",
+        "sources": [
+            {
+                "source_url": "https://risk.example/advisory",
+                "source_title": "Trade Advisory",
+                "retrieved_at": "2026-03-11T08:01:00Z",
+                "method": "web_search",
+            }
+        ],
+        "captured_at": "2026-03-11T08:01:00Z",
+    }
+
     return {
         "freight": json.dumps(freight_payload),
         "customs": json.dumps(customs_payload),
         "fx": json.dumps(fx_payload),
+        "local_charges": json.dumps(local_charges_payload),
+        "risk_notes": json.dumps(risk_notes_payload),
     }
 
 
@@ -327,7 +383,7 @@ def test_route_required_state_retries_with_route_followup(tmp_path: Path) -> Non
         output_dir=tmp_path,
         now_fn=_fixed_now,
     )
-    assert delegate_called["count"] == 1
+    assert delegate_called["count"] == 2
     assert completed_result.status == "completed"
     assert completed_result.next_step == "send_whatsapp_export"
 
@@ -367,3 +423,102 @@ def test_missing_session_key_fails_fast() -> None:
             user_profile=_user_profile(),
             now_fn=_fixed_now,
         )
+
+
+def test_audio_followup_uses_transcript_and_returns_voice_reply(tmp_path: Path) -> None:
+    adapter = HermesWhatsAppQuoteAdapter(
+        session_store=InMemoryQuoteLoopSessionStore(),
+    )
+    adapter.handle_event(
+        _sample_event(),
+        multimodal_extractor=_fake_multimodal_extractor,
+        delegate_task_runner=lambda tasks: {},
+        user_profile=_user_profile(),
+        now_fn=_fixed_now,
+    )
+
+    result = adapter.handle_event(
+        {"user_id": "2348011111111", "audio": "/tmp/voice.ogg"},
+        multimodal_extractor=_fake_multimodal_extractor,
+        delegate_task_runner=lambda tasks: _build_delegate_outputs(
+            extraction=_sample_extraction_payload(),
+            local_currency="NGN",
+        ),
+        user_profile=_user_profile(),
+        export_format="csv",
+        output_dir=tmp_path,
+        now_fn=_fixed_now,
+        voice_transcriber=lambda **_: "Confirmed",
+        voice_synthesizer=lambda **_: {
+            "type": "audio",
+            "path": "/tmp/reply.ogg",
+            "mime_type": "audio/ogg",
+            "audio_as_voice": True,
+        },
+    )
+
+    assert result.status == "completed"
+    assert result.user_message is None
+    assert any(item.get("type") == "audio" for item in result.attachments)
+
+
+def test_text_followup_stays_text_even_with_voice_synthesizer(tmp_path: Path) -> None:
+    adapter = HermesWhatsAppQuoteAdapter(
+        session_store=InMemoryQuoteLoopSessionStore(),
+    )
+    adapter.handle_event(
+        _sample_event(),
+        multimodal_extractor=_fake_multimodal_extractor,
+        delegate_task_runner=lambda tasks: {},
+        user_profile=_user_profile(),
+        now_fn=_fixed_now,
+    )
+
+    result = adapter.handle_event(
+        {"user_id": "2348011111111", "text": "Confirmed"},
+        multimodal_extractor=_fake_multimodal_extractor,
+        delegate_task_runner=lambda tasks: _build_delegate_outputs(
+            extraction=_sample_extraction_payload(),
+            local_currency="NGN",
+        ),
+        user_profile=_user_profile(),
+        export_format="csv",
+        output_dir=tmp_path,
+        now_fn=_fixed_now,
+        voice_synthesizer=lambda **_: {
+            "type": "audio",
+            "path": "/tmp/should-not-be-used.ogg",
+            "mime_type": "audio/ogg",
+            "audio_as_voice": True,
+        },
+    )
+
+    assert result.status == "completed"
+    assert result.user_message is not None
+    assert not any(item.get("path") == "/tmp/should-not-be-used.ogg" for item in result.attachments)
+
+
+def test_trade_radar_audio_request_returns_voice_reply() -> None:
+    adapter = HermesWhatsAppQuoteAdapter(
+        session_store=InMemoryQuoteLoopSessionStore(),
+    )
+
+    result = adapter.handle_event(
+        {"user_id": "2348011111111", "audio": "/tmp/request.ogg"},
+        multimodal_extractor=_fake_multimodal_extractor,
+        delegate_task_runner=lambda tasks: {},
+        user_profile=_user_profile(),
+        now_fn=_fixed_now,
+        voice_transcriber=lambda **_: "Track HS 850440 China->Nigeria, alert me daily 8am",
+        voice_synthesizer=lambda **_: {
+            "type": "audio",
+            "path": "/tmp/radar.ogg",
+            "mime_type": "audio/ogg",
+            "audio_as_voice": True,
+        },
+        schedule_cronjob=lambda **_: {"job_id": "job-1", "status": "scheduled"},
+    )
+
+    assert result.status == "trade_radar_scheduled"
+    assert result.user_message is None
+    assert any(item.get("path") == "/tmp/radar.ogg" for item in result.attachments)

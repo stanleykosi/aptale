@@ -45,12 +45,15 @@ def _base_landed_cost_input() -> dict:
         "fx_quote_currency": "NGN",
         "fx_selected_rate_type": "official",
         "fx_selected_rate": 100.0,
+        "local_charges_currency": "NGN",
+        "local_charges_amount": 0.0,
         "local_currency": "NGN",
         "profit_margin_pct": 20.0,
         "quote_ids": {
             "freight_quote_id": "fq_e2e_export_001",
             "customs_quote_id": "cq_e2e_export_001",
             "fx_quote_id": "xq_e2e_export_001",
+            "local_charges_quote_id": "lq_e2e_export_001",
         },
         "requested_at": "2026-03-10T00:00:00Z",
     }
@@ -82,4 +85,3 @@ def test_exports_end_to_end_include_branding_and_disclaimer(tmp_path: Path) -> N
     assert PDF_BRAND.encode("utf-8") in pdf_bytes
     assert b"TradeWeaver" in pdf_bytes
     assert output["disclaimer"].encode("utf-8") in pdf_bytes
-

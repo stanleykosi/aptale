@@ -8,7 +8,7 @@ This document defines the single canonical Aptale codepath and repository bounda
 
 1. User sends invoice content over WhatsApp.
 2. Hermes-hosted intake flow performs extraction, translation, and confirmation.
-3. Parent orchestration delegates sourcing tasks (freight, customs, FX) with strict JSON contracts.
+3. Parent orchestration delegates sourcing tasks (freight, customs, FX, local charges, risk notes) with strict JSON contracts.
 4. Landed cost calculation runs deterministically from validated structured inputs.
 5. Result and disclaimer are returned to the user in WhatsApp.
 6. Optional alert criteria are scheduled for proactive monitoring and delivery.

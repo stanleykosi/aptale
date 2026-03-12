@@ -119,7 +119,7 @@ def test_batch_routing_harness_records_pass_fail_metrics() -> None:
                     extraction_status="validated",
                     route_status=route_result.status,
                 )
-                expected_task_types = ["freight", "customs", "fx"]
+                expected_task_types = ["freight", "customs", "fx", "local_charges", "risk_notes"]
                 delegation_ok = [task.get("task_type") for task in tasks] == expected_task_types
                 delegation_trigger.mark(delegation_ok)
 
@@ -129,7 +129,13 @@ def test_batch_routing_harness_records_pass_fail_metrics() -> None:
                         local_currency=str(route_result.local_currency),
                     )
                     parsed = parse_subagent_outputs(raw_outputs)
-                    subagent_shape_ok = set(parsed.keys()) == {"freight", "customs", "fx"}
+                    subagent_shape_ok = set(parsed.keys()) == {
+                        "freight",
+                        "customs",
+                        "fx",
+                        "local_charges",
+                        "risk_notes",
+                    }
                     subagent_json_shape.mark(subagent_shape_ok)
                 else:
                     subagent_json_shape.mark(False)
@@ -329,10 +335,66 @@ def _build_stub_subagent_outputs(
         "captured_at": "2026-03-10T10:00:00Z",
     }
 
+    local_charges_payload = {
+        "schema_version": "1.0",
+        "quote_id": f"lq_{extraction_id}",
+        "extraction_id": extraction_id,
+        "destination_country": destination_country,
+        "currency": local_currency,
+        "total_amount": 5000.0,
+        "lines": [
+            {
+                "name": "terminal_handling",
+                "amount": 5000.0,
+                "currency": local_currency,
+                "notes": None,
+            }
+        ],
+        "source_type": "official_portal",
+        "sources": [
+            {
+                "source_url": "https://local.example/synthetic-charges",
+                "source_title": "Synthetic Local Charges",
+                "retrieved_at": "2026-03-10T10:00:00Z",
+                "method": "web_extract",
+            }
+        ],
+        "captured_at": "2026-03-10T10:00:00Z",
+    }
+
+    risk_notes_payload = {
+        "schema_version": "1.0",
+        "quote_id": f"rq_{extraction_id}",
+        "extraction_id": extraction_id,
+        "destination_country": destination_country,
+        "risk_level": "medium",
+        "notes": [
+            {
+                "code": "port_congestion",
+                "title": "Port Congestion",
+                "description": "Moderate congestion expected.",
+                "impact_level": "medium",
+                "recommendation": "Book in advance.",
+            }
+        ],
+        "source_type": "trade_advisory",
+        "sources": [
+            {
+                "source_url": "https://risk.example/synthetic-advisory",
+                "source_title": "Synthetic Risk Advisory",
+                "retrieved_at": "2026-03-10T10:00:00Z",
+                "method": "web_search",
+            }
+        ],
+        "captured_at": "2026-03-10T10:00:00Z",
+    }
+
     return {
         "freight": json.dumps(freight_payload),
         "customs": json.dumps(customs_payload),
         "fx": json.dumps(fx_payload),
+        "local_charges": json.dumps(local_charges_payload),
+        "risk_notes": json.dumps(risk_notes_payload),
     }
 
 

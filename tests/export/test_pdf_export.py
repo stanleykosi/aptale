@@ -43,12 +43,15 @@ def _base_input() -> dict:
         "fx_quote_currency": "NGN",
         "fx_selected_rate_type": "parallel",
         "fx_selected_rate": 100,
+        "local_charges_currency": "NGN",
+        "local_charges_amount": 0,
         "local_currency": "NGN",
         "profit_margin_pct": 20,
         "quote_ids": {
             "freight_quote_id": "fq_001",
             "customs_quote_id": "cq_001",
             "fx_quote_id": "xq_001",
+            "local_charges_quote_id": "lq_001",
         },
         "requested_at": "2026-03-10T00:00:00Z",
     }

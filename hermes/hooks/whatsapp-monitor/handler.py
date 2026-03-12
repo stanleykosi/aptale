@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import logging
 import os
 from typing import Any, Mapping
 from urllib.request import Request, urlopen
 
 REPAIR_COMMAND = "hermes whatsapp"
 WEBHOOK_ENV_VAR = "ADMIN_ALERT_WEBHOOK_URL"
+logger = logging.getLogger(__name__)
 
 _DISCONNECT_MARKERS = (
     "disconnect",
@@ -37,9 +39,11 @@ async def handle(event_type: str, context: dict) -> None:
 
     webhook_url = os.getenv(WEBHOOK_ENV_VAR, "").strip()
     if not webhook_url:
-        raise RuntimeError(
-            f"{WEBHOOK_ENV_VAR} is required for whatsapp-monitor hook alerts."
+        logger.warning(
+            "%s not set; skipping whatsapp-monitor alert delivery.",
+            WEBHOOK_ENV_VAR,
         )
+        return
 
     post_admin_alert(payload=payload, webhook_url=webhook_url)
 

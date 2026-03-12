@@ -39,6 +39,9 @@ class SourcingLegFailure:
     code: SourcingFailureCode
     detail: str
     can_switch_to_open_web_search: bool
+    retry_attempt: int = 0
+    source_strategy: str = "default"
+    switched_to_alternate_sources: bool = False
 
 
 class SourcingLegFailureError(RuntimeError):
@@ -56,6 +59,8 @@ def resolve_sourcing_leg(
     task_type: str,
     raw_output: str | None = None,
     execution_error: Exception | None = None,
+    retry_attempt: int = 0,
+    source_strategy: str = "default",
 ) -> ParsedSubagentResult:
     """
     Resolve one sourcing leg output, fail-fast on known failure categories.
@@ -69,7 +74,12 @@ def resolve_sourcing_leg(
         raise
 
     if execution_error is not None:
-        failure = classify_execution_error(task_type=task_type, error=execution_error)
+        failure = classify_execution_error(
+            task_type=task_type,
+            error=execution_error,
+            retry_attempt=retry_attempt,
+            source_strategy=source_strategy,
+        )
         raise SourcingLegFailureError(failure) from execution_error
 
     if raw_output is None or not raw_output.strip():
@@ -82,6 +92,9 @@ def resolve_sourcing_leg(
                     task_type=task_type,
                     code=SourcingFailureCode.EMPTY_RESULT,
                 ),
+                retry_attempt=retry_attempt,
+                source_strategy=source_strategy,
+                switched_to_alternate_sources=(source_strategy == "open_web_only"),
             )
         )
 
@@ -99,11 +112,20 @@ def resolve_sourcing_leg(
                 code=SourcingFailureCode.SCHEMA_VIOLATION,
                 detail=str(exc),
                 can_switch_to_open_web_search=False,
+                retry_attempt=retry_attempt,
+                source_strategy=source_strategy,
+                switched_to_alternate_sources=(source_strategy == "open_web_only"),
             )
         ) from exc
 
 
-def classify_execution_error(*, task_type: str, error: Exception) -> SourcingLegFailure:
+def classify_execution_error(
+    *,
+    task_type: str,
+    error: Exception,
+    retry_attempt: int = 0,
+    source_strategy: str = "default",
+) -> SourcingLegFailure:
     """Classify delegated subagent execution failures into canonical categories."""
     detail = str(error).strip() or error.__class__.__name__
     lowered = detail.lower()
@@ -137,6 +159,9 @@ def classify_execution_error(*, task_type: str, error: Exception) -> SourcingLeg
         code=code,
         detail=detail,
         can_switch_to_open_web_search=_can_switch_to_open_web(task_type=task_type, code=code),
+        retry_attempt=retry_attempt,
+        source_strategy=source_strategy,
+        switched_to_alternate_sources=(source_strategy == "open_web_only"),
     )
 
 
@@ -145,6 +170,9 @@ def summarize_failure_for_parent(
     task_type: str,
     code: SourcingFailureCode,
     detail: str,
+    retry_attempt: int = 0,
+    source_strategy: str = "default",
+    switched_to_alternate_sources: bool = False,
 ) -> dict[str, Any]:
     """
     Build a compact parent-side summary payload for a sourcing failure.
@@ -159,6 +187,9 @@ def summarize_failure_for_parent(
             task_type=task_type,
             code=code,
         ),
+        "retry_attempt": retry_attempt,
+        "source_strategy": source_strategy,
+        "switched_to_alternate_sources": switched_to_alternate_sources,
     }
 
 

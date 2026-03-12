@@ -1,6 +1,6 @@
 # Aptale
 
-Aptale is an autonomous AI freight and customs broker built on the Hermes Agent framework. It operates over WhatsApp to ingest invoices, source freight/customs/FX data, calculate landed costs, and deliver alerts.
+Aptale is an autonomous AI freight and customs broker built on the Hermes Agent framework. It operates over WhatsApp to ingest invoices, source freight/customs/FX/local-charges/risk data, calculate landed costs, and deliver alerts.
 
 ## Architecture At A Glance
 

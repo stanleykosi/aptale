@@ -194,10 +194,66 @@ def _build_delegate_outputs(
         "captured_at": "2026-03-11T08:00:00Z",
     }
 
+    local_charges_payload = {
+        "schema_version": "1.0",
+        "quote_id": f"lq_{extraction_id}",
+        "extraction_id": extraction_id,
+        "destination_country": destination_country,
+        "currency": local_currency,
+        "total_amount": 5000.0,
+        "lines": [
+            {
+                "name": "terminal_handling",
+                "amount": 5000.0,
+                "currency": local_currency,
+                "notes": None,
+            }
+        ],
+        "source_type": "official_portal",
+        "sources": [
+            {
+                "source_url": "https://local.example/charges",
+                "source_title": "Local Charges",
+                "retrieved_at": "2026-03-11T08:00:00Z",
+                "method": "web_extract",
+            }
+        ],
+        "captured_at": "2026-03-11T08:00:00Z",
+    }
+
+    risk_notes_payload = {
+        "schema_version": "1.0",
+        "quote_id": f"rq_{extraction_id}",
+        "extraction_id": extraction_id,
+        "destination_country": destination_country,
+        "risk_level": "medium",
+        "notes": [
+            {
+                "code": "port_congestion",
+                "title": "Port Congestion",
+                "description": "Moderate congestion expected this week.",
+                "impact_level": "medium",
+                "recommendation": "Book discharge slots early.",
+            }
+        ],
+        "source_type": "trade_advisory",
+        "sources": [
+            {
+                "source_url": "https://risk.example/advisory",
+                "source_title": "Trade Advisory",
+                "retrieved_at": "2026-03-11T08:01:00Z",
+                "method": "web_search",
+            }
+        ],
+        "captured_at": "2026-03-11T08:01:00Z",
+    }
+
     return {
         "freight": json.dumps(freight_payload),
         "customs": json.dumps(customs_payload),
         "fx": json.dumps(fx_payload),
+        "local_charges": json.dumps(local_charges_payload),
+        "risk_notes": json.dumps(risk_notes_payload),
     }
 
 
@@ -238,8 +294,22 @@ def test_complete_invoice_quote_loop_runs_to_export_and_source_trail(
     extraction = _sample_extraction_payload()
 
     def delegate_runner(*, tasks: list[dict[str, Any]]) -> dict[str, str]:
-        assert [task["task_type"] for task in tasks] == ["freight", "customs", "fx"]
-        return _build_delegate_outputs(extraction=extraction, local_currency="NGN")
+        task_types = [task["task_type"] for task in tasks]
+        if task_types == [
+            "freight",
+            "customs",
+            "fx",
+            "local_charges",
+            "risk_notes",
+        ]:
+            return _build_delegate_outputs(extraction=extraction, local_currency="NGN")
+        if task_types == ["scenario_fastest_freight", "scenario_cheapest_freight"]:
+            outputs = _build_delegate_outputs(extraction=extraction, local_currency="NGN")
+            return {
+                "scenario_fastest_freight": outputs["freight"],
+                "scenario_cheapest_freight": outputs["freight"],
+            }
+        raise AssertionError(f"Unexpected task types: {task_types!r}")
 
     result = complete_invoice_quote_loop(
         invoice_extraction=extraction,
@@ -259,7 +329,9 @@ def test_complete_invoice_quote_loop_runs_to_export_and_source_trail(
     assert result.local_currency == "NGN"
     assert result.landed_cost_output is not None
     assert result.source_trail is not None
-    assert len(result.source_trail["entries"]) >= 3
+    assert len(result.source_trail["entries"]) >= 4
+    assert result.confidence_report is not None
+    assert len(result.scenario_options) == 3
     assert result.export_response is not None
     attachment = result.export_response["attachments"][0]
     assert attachment["mime_type"] == "text/csv"

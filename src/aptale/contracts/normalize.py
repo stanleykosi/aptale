@@ -150,6 +150,7 @@ def normalize_landed_cost_input_payload(payload: Mapping[str, Any]) -> dict[str,
         "freight_currency",
         "fx_base_currency",
         "fx_quote_currency",
+        "local_charges_currency",
         "local_currency",
     ):
         if key in data and data[key] is not None:
@@ -171,4 +172,3 @@ def normalize_landed_cost_input_payload(payload: Mapping[str, Any]) -> dict[str,
                 line["fixed_fee_currency"] = normalize_currency(line["fixed_fee_currency"])
 
     return data
-

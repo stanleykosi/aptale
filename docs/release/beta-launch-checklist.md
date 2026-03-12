@@ -23,7 +23,7 @@ Status legend:
 
 ## Alerting & Monitoring Hooks
 
-- [ ] `ADMIN_ALERT_WEBHOOK_URL` is configured.
+- [ ] `ADMIN_ALERT_WEBHOOK_URL` is configured (optional but recommended for proactive ops alerts).
 - [ ] WhatsApp monitor hook is deployed and active.
 - [ ] Test alert path confirms webhook delivery for a simulated disconnect/re-pair event.
 
@@ -65,4 +65,3 @@ Status legend:
 - [ ] All required checks above are complete.
 - [ ] Open incidents are reviewed and accepted for beta risk.
 - [ ] Beta tester onboarding notes are recorded.
-

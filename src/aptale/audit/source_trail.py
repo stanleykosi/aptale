@@ -8,14 +8,17 @@ from typing import Any, Mapping
 
 from aptale.delegation.result_models import ParsedSubagentResult
 
-_REQUIRED_TASKS = ("freight", "customs", "fx")
+_REQUIRED_TASKS = ("freight", "customs", "fx", "local_charges")
+_OPTIONAL_TASKS = ("risk_notes",)
 _TASK_ORDER = {name: index for index, name in enumerate(_REQUIRED_TASKS)}
+_TASK_ORDER.update({name: len(_TASK_ORDER) + index for index, name in enumerate(_OPTIONAL_TASKS)})
 _PORTAL_SOURCE_TYPES = frozenset(
     {
         "official_portal",
         "carrier_portal",
         "forwarder_portal",
         "government_portal",
+        "trade_advisory",
     }
 )
 
@@ -87,13 +90,18 @@ def assemble_source_trail(
     entries: list[SourceTrailEntry] = []
     seen: set[tuple[str, str, str, str, str, str]] = set()
 
-    for task_type in _REQUIRED_TASKS:
+    task_types = list(_REQUIRED_TASKS)
+    for optional in _OPTIONAL_TASKS:
+        if optional in payloads:
+            task_types.append(optional)
+
+    for task_type in task_types:
         payload = payloads[task_type]
         quote_id = _require_non_blank_string(payload, "quote_id", context=task_type)
         captured_at = _require_non_blank_string(payload, "captured_at", context=task_type)
         sources = _require_sources(payload, context=task_type)
 
-        if task_type in {"freight", "customs"}:
+        if task_type in {"freight", "customs", "local_charges", "risk_notes"}:
             source_type = _require_non_blank_string(payload, "source_type", context=task_type)
             discovery_channel = _discovery_for_portal_source_type(source_type, context=task_type)
             for source in sources:
@@ -176,12 +184,27 @@ def _collect_payloads(
     missing = [task for task in _REQUIRED_TASKS if task not in parsed_results]
     if missing:
         raise SourceTrailError(
-            "Source trail requires all task results (freight, customs, fx). "
+            "Source trail requires all core task results (freight, customs, fx, local_charges). "
             f"Missing: {', '.join(sorted(missing))}."
         )
 
     payloads: dict[str, Mapping[str, Any]] = {}
     for task in _REQUIRED_TASKS:
+        result = parsed_results[task]
+        if not isinstance(result, ParsedSubagentResult):
+            raise SourceTrailError(
+                f"Expected ParsedSubagentResult for task '{task}', got {type(result).__name__}."
+            )
+        if result.task_type != task:
+            raise SourceTrailError(
+                f"Task/result mismatch for '{task}': result.task_type={result.task_type!r}."
+            )
+        if not isinstance(result.payload, Mapping):
+            raise SourceTrailError(f"Parsed payload for '{task}' must be a mapping.")
+        payloads[task] = result.payload
+    for task in _OPTIONAL_TASKS:
+        if task not in parsed_results:
+            continue
         result = parsed_results[task]
         if not isinstance(result, ParsedSubagentResult):
             raise SourceTrailError(

@@ -21,7 +21,7 @@ This follows Hermes WhatsApp guidance: temporary disconnections can auto-recover
 
 - `ADMIN_ALERT_WEBHOOK_URL` (PagerDuty/Slack-compatible webhook endpoint)
 
-If an alert condition is detected and this variable is missing, the hook raises an explicit runtime error so the issue is visible in gateway logs.
+If an alert condition is detected and this variable is missing, the hook skips delivery and logs a warning. The hook remains non-blocking and optional.
 
 ## Runtime Registration
 

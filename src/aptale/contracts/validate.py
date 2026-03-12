@@ -27,9 +27,12 @@ _SCHEMA_FILES = {
     "freight_quote": "freight_quote.schema.json",
     "customs_quote": "customs_quote.schema.json",
     "fx_quote": "fx_quote.schema.json",
+    "local_charge_quote": "local_charge_quote.schema.json",
+    "risk_note_quote": "risk_note_quote.schema.json",
     "landed_cost_input": "landed_cost_input.schema.json",
     "landed_cost_output": "landed_cost_output.schema.json",
     "alert_rule": "alert_rule.schema.json",
+    "trade_radar_rule": "trade_radar_rule.schema.json",
 }
 
 _SCHEMA_ROOT = Path(__file__).resolve().parents[3] / "schemas"
@@ -121,11 +124,13 @@ def validate_landed_cost_input(payload: Mapping[str, Any]) -> dict[str, Any]:
         "invoice_total",
         "freight_quote_amount",
         "fx_selected_rate",
+        "local_charges_amount",
         "profit_margin_pct",
         "customs_lines",
         "quote_ids.freight_quote_id",
         "quote_ids.customs_quote_id",
         "quote_ids.fx_quote_id",
+        "quote_ids.local_charges_quote_id",
     )
     for path in required_paths:
         value = _value_at_path(data, path)
@@ -139,6 +144,7 @@ def validate_landed_cost_input(payload: Mapping[str, Any]) -> dict[str, Any]:
     fx_base_currency = data["fx_base_currency"]
     local_currency = data["local_currency"]
     fx_quote_currency = data["fx_quote_currency"]
+    local_charges_currency = data["local_charges_currency"]
 
     # The Step 10 calculator path is single-base-currency only.
     if not (
@@ -150,6 +156,10 @@ def validate_landed_cost_input(payload: Mapping[str, Any]) -> dict[str, Any]:
     if local_currency != fx_quote_currency:
         raise PartialPayloadError(
             "local_currency must match fx_quote_currency for landed-cost calculation."
+        )
+    if local_charges_currency != local_currency:
+        raise PartialPayloadError(
+            "local_charges_currency must match local_currency for landed-cost calculation."
         )
 
     for idx, line in enumerate(data["customs_lines"]):
@@ -228,4 +238,3 @@ def _is_empty(value: Any) -> bool:
     if isinstance(value, (list, tuple, set, dict)) and len(value) == 0:
         return True
     return False
-

@@ -13,6 +13,8 @@ TASK_TO_SCHEMA = {
     "freight": "freight_quote",
     "customs": "customs_quote",
     "fx": "fx_quote",
+    "local_charges": "local_charge_quote",
+    "risk_notes": "risk_note_quote",
 }
 
 
@@ -67,6 +69,10 @@ def normalize_subagent_payload(task_type: str, payload: Mapping[str, Any]) -> di
             _normalize_customs_payload(data)
         elif task_type == "fx":
             _normalize_fx_payload(data)
+        elif task_type == "local_charges":
+            _normalize_local_charges_payload(data)
+        elif task_type == "risk_notes":
+            _normalize_risk_notes_payload(data)
     except (NormalizationError, TypeError, ValueError) as exc:
         raise InvalidSubagentPayloadError(
             f"Failed to normalize {task_type} payload: {exc}"
@@ -138,6 +144,40 @@ def _normalize_fx_payload(data: dict[str, Any]) -> None:
         _strip_field(parallel_rate, "provider_name")
         _strip_field(parallel_rate, "as_of")
         _strip_field(parallel_rate, "source_url")
+
+
+def _normalize_local_charges_payload(data: dict[str, Any]) -> None:
+    _normalize_country_field(data, "destination_country")
+    _normalize_currency_field(data, "currency")
+    _lower_field(data, "source_type")
+    _normalize_sources(data, include_rate_type=False)
+
+    lines = data.get("lines")
+    if isinstance(lines, list):
+        for line in lines:
+            if not isinstance(line, dict):
+                continue
+            _strip_field(line, "name")
+            _normalize_currency_field(line, "currency")
+            _strip_nullable_string_field(line, "notes")
+
+
+def _normalize_risk_notes_payload(data: dict[str, Any]) -> None:
+    _normalize_country_field(data, "destination_country")
+    _lower_field(data, "risk_level")
+    _lower_field(data, "source_type")
+    _normalize_sources(data, include_rate_type=False)
+
+    notes = data.get("notes")
+    if isinstance(notes, list):
+        for note in notes:
+            if not isinstance(note, dict):
+                continue
+            _strip_field(note, "code")
+            _strip_field(note, "title")
+            _strip_field(note, "description")
+            _lower_field(note, "impact_level")
+            _strip_field(note, "recommendation")
 
 
 def _normalize_sources(data: dict[str, Any], *, include_rate_type: bool) -> None:

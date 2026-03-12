@@ -17,6 +17,8 @@
     "fx_quote_currency",
     "fx_selected_rate_type",
     "fx_selected_rate",
+    "local_charges_currency",
+    "local_charges_amount",
     "local_currency",
     "profit_margin_pct",
     "quote_ids",
@@ -80,6 +82,14 @@
       "type": "number",
       "exclusiveMinimum": 0
     },
+    "local_charges_currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "local_charges_amount": {
+      "type": "number",
+      "minimum": 0
+    },
     "local_currency": {
       "type": "string",
       "pattern": "^[A-Z]{3}$"
@@ -95,7 +105,8 @@
       "required": [
         "freight_quote_id",
         "customs_quote_id",
-        "fx_quote_id"
+        "fx_quote_id",
+        "local_charges_quote_id"
       ],
       "properties": {
         "freight_quote_id": {
@@ -107,6 +118,10 @@
           "minLength": 1
         },
         "fx_quote_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "local_charges_quote_id": {
           "type": "string",
           "minLength": 1
         }

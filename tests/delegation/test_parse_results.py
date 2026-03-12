@@ -116,6 +116,64 @@ def _fx_payload() -> dict:
     }
 
 
+def _local_charges_payload() -> dict:
+    return {
+        "schema_version": "1.0",
+        "quote_id": "lq_001",
+        "extraction_id": "invext_001",
+        "destination_country": "ng",
+        "currency": "ngn",
+        "total_amount": 5000.0,
+        "lines": [
+            {
+                "name": "terminal",
+                "amount": 5000.0,
+                "currency": "ngn",
+                "notes": None,
+            }
+        ],
+        "source_type": "official_portal",
+        "sources": [
+            {
+                "source_url": "https://local.example/charges",
+                "source_title": "Local Charges",
+                "retrieved_at": "2026-03-10T10:00:00Z",
+                "method": "web_extract",
+            }
+        ],
+        "captured_at": "2026-03-10T10:00:00Z",
+    }
+
+
+def _risk_notes_payload() -> dict:
+    return {
+        "schema_version": "1.0",
+        "quote_id": "rq_001",
+        "extraction_id": "invext_001",
+        "destination_country": "ng",
+        "risk_level": "medium",
+        "notes": [
+            {
+                "code": "port_congestion",
+                "title": "Port Congestion",
+                "description": "Congestion expected.",
+                "impact_level": "medium",
+                "recommendation": "Book slot early.",
+            }
+        ],
+        "source_type": "trade_advisory",
+        "sources": [
+            {
+                "source_url": "https://risk.example/advisory",
+                "source_title": "Trade Advisory",
+                "retrieved_at": "2026-03-10T10:05:00Z",
+                "method": "web_search",
+            }
+        ],
+        "captured_at": "2026-03-10T10:05:00Z",
+    }
+
+
 def test_parse_subagent_output_normalizes_and_validates_freight() -> None:
     raw_output = json.dumps(_freight_payload())
     result = parse_subagent_output(task_type="freight", raw_output=raw_output)
@@ -157,19 +215,23 @@ def test_parse_subagent_output_rejects_schema_invalid_payload() -> None:
         parse_subagent_output(task_type="customs", raw_output=json.dumps(payload))
 
 
-def test_parse_subagent_outputs_parses_freight_customs_fx_mapping() -> None:
+def test_parse_subagent_outputs_parses_five_leg_mapping() -> None:
     parsed = parse_subagent_outputs(
         {
             "freight": json.dumps(_freight_payload()),
             "customs": json.dumps(_customs_payload()),
             "fx": json.dumps(_fx_payload()),
+            "local_charges": json.dumps(_local_charges_payload()),
+            "risk_notes": json.dumps(_risk_notes_payload()),
         }
     )
 
-    assert set(parsed.keys()) == {"freight", "customs", "fx"}
+    assert set(parsed.keys()) == {"freight", "customs", "fx", "local_charges", "risk_notes"}
     assert parsed["customs"].payload["destination_country"] == "NG"
     assert parsed["customs"].payload["assessment_basis"] == "invoice_value"
     assert parsed["customs"].payload["lines"][0]["hs_code"] == "851712"
     assert parsed["fx"].payload["base_currency"] == "USD"
     assert parsed["fx"].payload["quote_currency"] == "NGN"
     assert parsed["fx"].payload["selected_rate_type"] == "official"
+    assert parsed["local_charges"].payload["currency"] == "NGN"
+    assert parsed["risk_notes"].payload["risk_level"] == "medium"

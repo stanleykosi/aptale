@@ -70,8 +70,9 @@ def _compute_landed_cost(
     invoice_local = _money(invoice_total * fx_rate)
     freight_local = _money(freight_quote_amount * fx_rate)
     customs_local = _compute_customs_local(request=request, invoice_total=invoice_total, fx_rate=fx_rate)
+    local_charges_local = _compute_local_charges_local(request=request)
 
-    subtotal = _money(invoice_local + freight_local + customs_local)
+    subtotal = _money(invoice_local + freight_local + customs_local + local_charges_local)
     profit_amount = _money(subtotal * (margin_pct / Decimal("100")))
     total_landed_cost = _money(subtotal + profit_amount)
     cost_per_unit = _cost_per_unit(
@@ -92,6 +93,7 @@ def _compute_landed_cost(
             invoice_local=float(invoice_local),
             freight_local=float(freight_local),
             customs_local=float(customs_local),
+            local_charges_local=float(local_charges_local),
             margin_local=float(profit_amount),
         ),
         source_quote_ids=tuple(request.quote_ids.as_list()),
@@ -132,6 +134,19 @@ def _compute_customs_local(
             )
 
     return _money(customs_from_rates_local + fixed_fees_local)
+
+
+def _compute_local_charges_local(*, request: LandedCostInputModel) -> Decimal:
+    """
+    Normalize local charges into local currency for subtotal integration.
+
+    Contract validation already ensures local_charges_currency equals local_currency.
+    """
+    if request.local_charges_currency != request.local_currency:
+        raise LandedCostComputationError(
+            "local_charges_currency must match local_currency for landed-cost calculation."
+        )
+    return _money(Decimal(str(request.local_charges_amount)))
 
 
 def _cost_per_unit(*, total: Decimal, weight_kg: float | None) -> Decimal | None:

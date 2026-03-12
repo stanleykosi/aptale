@@ -47,6 +47,12 @@ Use one current-state configuration only. Do not rely on undeclared local variab
 | `BROWSERBASE_KEEP_ALIVE` | Browserbase reconnect behavior | Optional tuning only |
 | `BROWSERBASE_SESSION_TIMEOUT` | Browserbase session lifetime | Optional tuning only |
 | `BROWSER_INACTIVITY_TIMEOUT` | Browser cleanup timeout | Optional tuning only |
+| `APTALE_LOCAL_STT_ENABLED` | Enables Aptale runtime patch for local STT | Keep `true` for voice-note support without OpenAI STT |
+| `APTALE_STT_PROVIDER` | STT provider selection (`local`, `openai`, `auto`) | Canonical value is `local` for open-source transcription |
+| `APTALE_STT_MODEL` | Local faster-whisper model size | `small` is recommended baseline quality/speed |
+| `APTALE_STT_DEVICE` | Local STT device selection | Use `auto` unless forcing `cpu` or `cuda` |
+| `APTALE_STT_COMPUTE_TYPE` | Local STT quantization mode | `int8` for CPU deployments |
+| `APTALE_STT_BEAM_SIZE` | Local STT decoding beam size | `1` is fastest for WhatsApp operations |
 
 ## Local Directories Used by Aptale
 

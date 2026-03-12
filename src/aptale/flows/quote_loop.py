@@ -7,8 +7,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
+from aptale.audit.confidence_score import compute_confidence_report
 from aptale.audit.source_trail import assemble_source_trail
 from aptale.calc.landed_cost import calculate_landed_cost
+from aptale.calc.scenario_optimizer import build_scenario_options, scenario_spread_pct
 from aptale.delegation.build_tasks import build_sourcing_tasks
 from aptale.delegation.error_policy import (
     SourcingFailureCode,
@@ -63,6 +65,10 @@ class QuoteLoopResult:
     export_response: Mapping[str, Any] | None = None
     source_trail: Mapping[str, Any] | None = None
     sourcing_failures: tuple[Mapping[str, Any], ...] = ()
+    confidence_report: Mapping[str, Any] | None = None
+    scenario_options: tuple[Mapping[str, Any], ...] = ()
+    risk_notes: tuple[Mapping[str, Any], ...] = ()
+    disruption_report: Mapping[str, Any] | None = None
 
     def as_mapping(self) -> dict[str, Any]:
         """Return a JSON-serializable mapping."""
@@ -77,6 +83,10 @@ class QuoteLoopResult:
             "export_response": self.export_response,
             "source_trail": self.source_trail,
             "sourcing_failures": [dict(item) for item in self.sourcing_failures],
+            "confidence_report": self.confidence_report,
+            "scenario_options": [dict(item) for item in self.scenario_options],
+            "risk_notes": [dict(item) for item in self.risk_notes],
+            "disruption_report": self.disruption_report,
         }
 
 
@@ -173,26 +183,21 @@ def complete_invoice_quote_loop(
             local_currency=route_result.local_currency,
         )
 
-    tasks = build_sourcing_tasks(
+    retry_result = _run_sourcing_with_retries(
         invoice_extraction=route_result.invoice_extraction,
         local_currency=route_result.local_currency,
         user_profile=user_profile,
-        extraction_status=clarified.status,
         route_status=route_result.status,
+        extraction_status=clarified.status,
+        delegate_task_runner=delegate_task_runner,
         subagent_model=subagent_model,
     )
 
-    delegate_outputs = delegate_task_runner(tasks=tasks)
-    raw_outputs = _coerce_delegate_outputs(tasks=tasks, delegate_outputs=delegate_outputs)
-    parsed_results, failures = _resolve_sourcing_results(
-        tasks=tasks,
-        raw_outputs=raw_outputs,
-    )
-    if failures:
+    if retry_result.blocking_failures:
         return QuoteLoopResult(
             status="sourcing_failed",
             next_step="retry_failed_sourcing_legs",
-            user_message=_render_sourcing_failure_message(failures),
+            user_message=_render_sourcing_failure_message(retry_result.blocking_failures),
             invoice_extraction=route_result.invoice_extraction,
             route_status=route_result.status,
             local_currency=route_result.local_currency,
@@ -201,27 +206,93 @@ def complete_invoice_quote_loop(
                     task_type=failure.task_type,
                     code=failure.code,
                     detail=failure.detail,
+                    retry_attempt=failure.retry_attempt,
+                    source_strategy=failure.source_strategy,
+                    switched_to_alternate_sources=failure.switched_to_alternate_sources,
                 )
-                for failure in failures
+                for failure in retry_result.blocking_failures
             ),
+            disruption_report=retry_result.disruption_report,
         )
 
     requested_at = _utc_iso(now())
     landed_cost_input = _build_landed_cost_input(
         invoice_extraction=route_result.invoice_extraction,
-        parsed_results=parsed_results,
+        parsed_results=retry_result.parsed_results,
         local_currency=route_result.local_currency,
         user_profile=user_profile,
         requested_at=requested_at,
     )
     landed_cost_output = calculate_landed_cost(landed_cost_input, now_fn=now)
+
+    confidence = compute_confidence_report(
+        retry_result.parsed_results,
+        retry_count_by_task=retry_result.retry_count_by_task,
+        advisory_failures=tuple(failure.task_type for failure in retry_result.advisory_failures),
+        now_fn=now,
+    )
+
+    scenario_options = _build_hybrid_scenario_options(
+        landed_cost_input=landed_cost_input,
+        landed_cost_output=landed_cost_output,
+        confidence_report=confidence.as_mapping(),
+        delegate_task_runner=delegate_task_runner,
+        invoice_extraction=route_result.invoice_extraction,
+        local_currency=route_result.local_currency,
+        user_profile=user_profile,
+        route_status=route_result.status,
+        extraction_status=clarified.status,
+        subagent_model=subagent_model,
+    )
+
+    advisory_lines = [
+        summarize_failure_for_parent(
+            task_type=failure.task_type,
+            code=failure.code,
+            detail=failure.detail,
+            retry_attempt=failure.retry_attempt,
+            source_strategy=failure.source_strategy,
+            switched_to_alternate_sources=failure.switched_to_alternate_sources,
+        )
+        for failure in retry_result.advisory_failures
+    ]
+    quote_insights = {
+        "confidence_report": confidence.as_mapping(),
+        "scenario_options": [dict(item) for item in scenario_options],
+        "advisory_failures": [
+            f"{item['task_type']}: {item['failure_code']} ({item['detail']})"
+            for item in advisory_lines
+        ],
+    }
+
     export_result = assemble_whatsapp_export_response(
         landed_cost_output,
         export_format=export_format,
         output_dir=output_dir,
         filename_stem=filename_stem,
+        quote_insights=quote_insights,
     )
-    source_trail = assemble_source_trail(parsed_results, assembled_at=requested_at)
+    source_trail = assemble_source_trail(retry_result.parsed_results, assembled_at=requested_at)
+
+    risk_notes_payload = retry_result.parsed_results.get("risk_notes")
+    risk_notes: tuple[Mapping[str, Any], ...] = ()
+    if risk_notes_payload is not None:
+        raw_notes = risk_notes_payload.payload.get("notes")
+        if isinstance(raw_notes, list):
+            risk_notes = tuple(note for note in raw_notes if isinstance(note, Mapping))
+
+    combined_failures = tuple(
+        summarize_failure_for_parent(
+            task_type=failure.task_type,
+            code=failure.code,
+            detail=failure.detail,
+            retry_attempt=failure.retry_attempt,
+            source_strategy=failure.source_strategy,
+            switched_to_alternate_sources=failure.switched_to_alternate_sources,
+        )
+        for failure in [*retry_result.blocking_failures, *retry_result.advisory_failures]
+    )
+
     return QuoteLoopResult(
         status="completed",
         next_step="send_whatsapp_export",
@@ -232,6 +303,11 @@ def complete_invoice_quote_loop(
         landed_cost_output=landed_cost_output,
         export_response=export_result.as_mapping(),
         source_trail=source_trail.as_mapping(),
+        sourcing_failures=combined_failures,
+        confidence_report=confidence.as_mapping(),
+        scenario_options=tuple(dict(item) for item in scenario_options),
+        risk_notes=risk_notes,
+        disruption_report=retry_result.disruption_report,
     )
 
 
@@ -293,6 +369,231 @@ def run_invoice_quote_loop(
     )
 
 
+@dataclass(frozen=True)
+class _SourcingRetryResult:
+    parsed_results: dict[str, ParsedSubagentResult]
+    blocking_failures: list[SourcingLegFailure]
+    advisory_failures: list[SourcingLegFailure]
+    retry_count_by_task: dict[str, int]
+    disruption_report: dict[str, Any]
+
+
+def _run_sourcing_with_retries(
+    *,
+    invoice_extraction: Mapping[str, Any],
+    local_currency: str,
+    user_profile: Mapping[str, Any],
+    route_status: str,
+    extraction_status: str,
+    delegate_task_runner: DelegateTaskRunner,
+    subagent_model: str | None,
+    max_retries: int = 2,
+) -> _SourcingRetryResult:
+    required_tasks = {"freight", "customs", "fx", "local_charges"}
+    advisory_tasks = {"risk_notes"}
+
+    parsed_results: dict[str, ParsedSubagentResult] = {}
+    blocking_failures: list[SourcingLegFailure] = []
+    advisory_failures: list[SourcingLegFailure] = []
+    retry_count_by_task: dict[str, int] = {}
+
+    pending_tasks = ["freight", "customs", "fx", "local_charges", "risk_notes"]
+    source_strategy_by_task: dict[str, str] = {task: "default" for task in pending_tasks}
+    disruption_events: list[dict[str, Any]] = []
+
+    for attempt in range(max_retries + 1):
+        if not pending_tasks:
+            break
+
+        all_tasks = build_sourcing_tasks(
+            invoice_extraction=invoice_extraction,
+            local_currency=local_currency,
+            user_profile=user_profile,
+            extraction_status=extraction_status,
+            route_status=route_status,
+            subagent_model=subagent_model,
+            source_strategy_by_task=source_strategy_by_task,
+        )
+        tasks = [task for task in all_tasks if task["task_type"] in set(pending_tasks)]
+
+        delegate_outputs = delegate_task_runner(tasks=tasks)
+        raw_outputs = _coerce_delegate_outputs(tasks=tasks, delegate_outputs=delegate_outputs)
+        parsed_batch, failed_batch = _resolve_sourcing_results(
+            tasks=tasks,
+            raw_outputs=raw_outputs,
+            retry_attempt=attempt,
+            source_strategy_by_task=source_strategy_by_task,
+        )
+
+        for task_type, result in parsed_batch.items():
+            parsed_results[task_type] = result
+
+        next_pending: list[str] = []
+        for failure in failed_batch:
+            should_retry = (
+                attempt < max_retries
+                and failure.can_switch_to_open_web_search
+                and failure.task_type not in advisory_tasks
+            )
+            if should_retry:
+                source_strategy_by_task[failure.task_type] = "open_web_only"
+                retry_count_by_task[failure.task_type] = retry_count_by_task.get(failure.task_type, 0) + 1
+                next_pending.append(failure.task_type)
+                disruption_events.append(
+                    {
+                        "task_type": failure.task_type,
+                        "attempt": attempt,
+                        "failure_code": failure.code.value,
+                        "action": "switched_to_open_web_only",
+                    }
+                )
+                continue
+
+            if failure.task_type in advisory_tasks:
+                advisory_failures.append(failure)
+            elif failure.task_type in required_tasks:
+                blocking_failures.append(failure)
+            else:
+                advisory_failures.append(failure)
+
+        succeeded_in_attempt = {task_type for task_type in pending_tasks if task_type in parsed_batch}
+        pending_tasks = [task for task in next_pending if task not in succeeded_in_attempt]
+
+    for task in required_tasks:
+        if task not in parsed_results and all(item.task_type != task for item in blocking_failures):
+            blocking_failures.append(
+                SourcingLegFailure(
+                    task_type=task,
+                    code=SourcingFailureCode.EMPTY_RESULT,
+                    detail="No successful result after retry policy.",
+                    can_switch_to_open_web_search=False,
+                    retry_attempt=max_retries,
+                    source_strategy=source_strategy_by_task.get(task, "default"),
+                    switched_to_alternate_sources=(
+                        source_strategy_by_task.get(task, "default") == "open_web_only"
+                    ),
+                )
+            )
+
+    disruption_report = {
+        "max_retries": max_retries,
+        "retry_count_by_task": dict(retry_count_by_task),
+        "events": disruption_events,
+    }
+
+    return _SourcingRetryResult(
+        parsed_results=parsed_results,
+        blocking_failures=blocking_failures,
+        advisory_failures=advisory_failures,
+        retry_count_by_task=retry_count_by_task,
+        disruption_report=disruption_report,
+    )
+
+
+def _build_hybrid_scenario_options(
+    *,
+    landed_cost_input: Mapping[str, Any],
+    landed_cost_output: Mapping[str, Any],
+    confidence_report: Mapping[str, Any],
+    delegate_task_runner: DelegateTaskRunner,
+    invoice_extraction: Mapping[str, Any],
+    local_currency: str,
+    user_profile: Mapping[str, Any],
+    route_status: str,
+    extraction_status: str,
+    subagent_model: str | None,
+) -> tuple[dict[str, Any], ...]:
+    scenarios = build_scenario_options(
+        landed_cost_input=landed_cost_input,
+        landed_cost_output=landed_cost_output,
+    )
+
+    overall_score = confidence_report.get("overall_score")
+    spread = scenario_spread_pct(scenarios)
+    if not isinstance(overall_score, (int, float)):
+        return scenarios
+    if overall_score >= 0.70 and spread >= 5.0:
+        return scenarios
+
+    scenario_quotes = _run_extra_scenario_freight_sourcing(
+        delegate_task_runner=delegate_task_runner,
+        invoice_extraction=invoice_extraction,
+        local_currency=local_currency,
+        user_profile=user_profile,
+        route_status=route_status,
+        extraction_status=extraction_status,
+        subagent_model=subagent_model,
+    )
+    if not scenario_quotes:
+        return scenarios
+
+    return build_scenario_options(
+        landed_cost_input=landed_cost_input,
+        landed_cost_output=landed_cost_output,
+        scenario_freight_quotes=scenario_quotes,
+    )
+
+
+def _run_extra_scenario_freight_sourcing(
+    *,
+    delegate_task_runner: DelegateTaskRunner,
+    invoice_extraction: Mapping[str, Any],
+    local_currency: str,
+    user_profile: Mapping[str, Any],
+    route_status: str,
+    extraction_status: str,
+    subagent_model: str | None,
+) -> dict[str, Mapping[str, Any]]:
+    all_tasks = build_sourcing_tasks(
+        invoice_extraction=invoice_extraction,
+        local_currency=local_currency,
+        user_profile=user_profile,
+        extraction_status=extraction_status,
+        route_status=route_status,
+        subagent_model=subagent_model,
+        source_strategy_by_task={"freight": "open_web_only"},
+    )
+    freight_task = next((task for task in all_tasks if task.get("task_type") == "freight"), None)
+    if freight_task is None:
+        return {}
+
+    fastest_task = dict(freight_task)
+    fastest_task["task_type"] = "scenario_fastest_freight"
+    fastest_task["goal"] = (
+        str(freight_task["goal"])
+        + " Optimize for fastest transit_time_days even if quote is higher. Return freight_quote JSON."
+    )
+
+    cheapest_task = dict(freight_task)
+    cheapest_task["task_type"] = "scenario_cheapest_freight"
+    cheapest_task["goal"] = (
+        str(freight_task["goal"])
+        + " Optimize for cheapest quote_amount even if transit time is slower. Return freight_quote JSON."
+    )
+
+    tasks = [fastest_task, cheapest_task]
+    outputs = delegate_task_runner(tasks=tasks)
+    raw_outputs = _coerce_delegate_outputs_for_scenario(tasks=tasks, delegate_outputs=outputs)
+
+    scenarios: dict[str, Mapping[str, Any]] = {}
+    for task_type, raw in raw_outputs.items():
+        try:
+            parsed = resolve_sourcing_leg(
+                task_type="freight",
+                raw_output=raw,
+                retry_attempt=0,
+                source_strategy="open_web_only",
+            )
+        except SourcingLegFailureError:
+            continue
+        if task_type == "scenario_fastest_freight":
+            scenarios["fastest"] = parsed.payload
+        if task_type == "scenario_cheapest_freight":
+            scenarios["cheapest"] = parsed.payload
+
+    return scenarios
+
+
 def _coerce_delegate_outputs(
     *,
     tasks: Sequence[Mapping[str, Any]],
@@ -346,6 +647,34 @@ def _coerce_delegate_outputs(
     )
 
 
+def _coerce_delegate_outputs_for_scenario(
+    *, tasks: Sequence[Mapping[str, Any]], delegate_outputs: Any
+) -> dict[str, str]:
+    task_types = _task_types_from_tasks(tasks)
+    if isinstance(delegate_outputs, Mapping):
+        outputs: dict[str, str] = {}
+        for task_type in task_types:
+            raw = delegate_outputs.get(task_type)
+            if isinstance(raw, str):
+                outputs[task_type] = raw
+        return outputs
+    if isinstance(delegate_outputs, Sequence) and not isinstance(
+        delegate_outputs, (str, bytes, bytearray)
+    ):
+        outputs: dict[str, str] = {}
+        for index, item in enumerate(delegate_outputs):
+            if index >= len(task_types):
+                break
+            if isinstance(item, str):
+                outputs[task_types[index]] = item
+            elif isinstance(item, Mapping):
+                raw = item.get("output") or item.get("result") or item.get("summary")
+                if isinstance(raw, str):
+                    outputs[task_types[index]] = raw
+        return outputs
+    return {}
+
+
 def _task_types_from_tasks(tasks: Sequence[Mapping[str, Any]]) -> list[str]:
     if not isinstance(tasks, Sequence):
         raise DelegateTaskOutputError("tasks must be a sequence.")
@@ -366,6 +695,8 @@ def _resolve_sourcing_results(
     *,
     tasks: Sequence[Mapping[str, Any]],
     raw_outputs: Mapping[str, str],
+    retry_attempt: int,
+    source_strategy_by_task: Mapping[str, str],
 ) -> tuple[dict[str, ParsedSubagentResult], list[SourcingLegFailure]]:
     parsed_results: dict[str, ParsedSubagentResult] = {}
     failures: list[SourcingLegFailure] = []
@@ -373,6 +704,7 @@ def _resolve_sourcing_results(
 
     for task_type in task_types:
         raw_output = raw_outputs.get(task_type)
+        strategy = str(source_strategy_by_task.get(task_type, "default"))
         if raw_output is None:
             failures.append(
                 SourcingLegFailure(
@@ -380,6 +712,9 @@ def _resolve_sourcing_results(
                     code=SourcingFailureCode.EMPTY_RESULT,
                     detail="Subagent output missing for this task.",
                     can_switch_to_open_web_search=(task_type != "fx"),
+                    retry_attempt=retry_attempt,
+                    source_strategy=strategy,
+                    switched_to_alternate_sources=(strategy == "open_web_only"),
                 )
             )
             continue
@@ -387,6 +722,8 @@ def _resolve_sourcing_results(
             parsed_results[task_type] = resolve_sourcing_leg(
                 task_type=task_type,
                 raw_output=raw_output,
+                retry_attempt=retry_attempt,
+                source_strategy=strategy,
             )
         except SourcingLegFailureError as exc:
             failures.append(exc.failure)
@@ -405,6 +742,7 @@ def _build_landed_cost_input(
     freight = parsed_results["freight"].payload
     customs = parsed_results["customs"].payload
     fx = parsed_results["fx"].payload
+    local_charges = parsed_results["local_charges"].payload
 
     profit_margin_pct = _extract_profit_margin_pct(user_profile)
     return {
@@ -420,12 +758,15 @@ def _build_landed_cost_input(
         "fx_quote_currency": fx["quote_currency"],
         "fx_selected_rate_type": fx["selected_rate_type"],
         "fx_selected_rate": fx["selected_rate"],
+        "local_charges_currency": local_charges["currency"],
+        "local_charges_amount": local_charges["total_amount"],
         "local_currency": local_currency,
         "profit_margin_pct": profit_margin_pct,
         "quote_ids": {
             "freight_quote_id": freight["quote_id"],
             "customs_quote_id": customs["quote_id"],
             "fx_quote_id": fx["quote_id"],
+            "local_charges_quote_id": local_charges["quote_id"],
         },
         "requested_at": requested_at,
     }

@@ -92,6 +92,7 @@ def _render_pdf(
         ("Invoice (Local)", _format_amount(breakdown["invoice_local"], places=2), currency),
         ("Freight (Local)", _format_amount(breakdown["freight_local"], places=2), currency),
         ("Customs (Local)", _format_amount(breakdown["customs_local"], places=2), currency),
+        ("Local Charges (Local)", _format_amount(breakdown["local_charges_local"], places=2), currency),
         ("Margin (Local)", _format_amount(breakdown["margin_local"], places=2), currency),
         ("Subtotal Before Margin", _format_amount(payload["subtotal_before_margin"], places=2), currency),
         ("Profit Margin (%)", _format_amount(payload["profit_margin_pct"], places=2), "%"),

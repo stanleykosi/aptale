@@ -16,6 +16,8 @@ _OUTPUT_SCHEMA_BY_TASK = {
     "freight": "freight_quote",
     "customs": "customs_quote",
     "fx": "fx_quote",
+    "local_charges": "local_charge_quote",
+    "risk_notes": "risk_note_quote",
 }
 
 
@@ -120,4 +122,3 @@ def _extract_timezone(user_profile: Mapping[str, Any]) -> str | None:
         if isinstance(value, str) and value.strip():
             return value.strip()
     return None
-

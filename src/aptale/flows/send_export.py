@@ -59,6 +59,7 @@ def assemble_whatsapp_export_response(
     export_format: str,
     output_dir: str | Path = "/workspace",
     filename_stem: str | None = None,
+    quote_insights: Mapping[str, Any] | None = None,
 ) -> SendExportResult:
     """
     Build quote message and one export document attachment.
@@ -86,7 +87,7 @@ def assemble_whatsapp_export_response(
         raise SendExportError("Export attachment path must exist and be absolute.")
 
     try:
-        message = render_quote_summary(validated)
+        message = render_quote_summary(validated, quote_insights=quote_insights)
     except QuoteSummaryError as exc:
         raise SendExportError("Failed to render WhatsApp quote summary.") from exc
 

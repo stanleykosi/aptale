@@ -36,4 +36,4 @@ COPY --chown=aptale:aptale . /opt/aptale
 USER aptale
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["bash", "-lc", "hermes gateway"]
+CMD ["bash", "-lc", "./scripts/start_gateway.sh"]

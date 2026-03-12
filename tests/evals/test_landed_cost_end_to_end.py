@@ -41,12 +41,15 @@ def _base_landed_cost_input() -> dict:
         "fx_quote_currency": "NGN",
         "fx_selected_rate_type": "official",
         "fx_selected_rate": 100.0,
+        "local_charges_currency": "NGN",
+        "local_charges_amount": 0.0,
         "local_currency": "NGN",
         "profit_margin_pct": 20.0,
         "quote_ids": {
             "freight_quote_id": "fq_e2e_001",
             "customs_quote_id": "cq_e2e_001",
             "fx_quote_id": "xq_e2e_001",
+            "local_charges_quote_id": "lq_e2e_001",
         },
         "requested_at": "2026-03-10T00:00:00Z",
     }
@@ -68,7 +71,8 @@ def test_landed_cost_end_to_end_is_deterministic_and_schema_valid() -> None:
         "invoice_local": 125000.0,
         "freight_local": 32000.0,
         "customs_local": 22250.0,
+        "local_charges_local": 0.0,
         "margin_local": 35850.0,
     }
-    assert output["source_quote_ids"] == ["fq_e2e_001", "cq_e2e_001", "xq_e2e_001"]
+    assert output["source_quote_ids"] == ["fq_e2e_001", "cq_e2e_001", "xq_e2e_001", "lq_e2e_001"]
     assert output["disclaimer"] == DISCLAIMER_TEXT

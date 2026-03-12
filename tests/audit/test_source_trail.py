@@ -19,6 +19,8 @@ def _parsed_result(task_type: str, payload: dict) -> ParsedSubagentResult:
         "freight": "freight_quote",
         "customs": "customs_quote",
         "fx": "fx_quote",
+        "local_charges": "local_charge_quote",
+        "risk_notes": "risk_note_quote",
     }
     return ParsedSubagentResult(
         task_type=task_type,
@@ -81,22 +83,40 @@ def _fx_payload() -> dict:
     }
 
 
+def _local_charges_payload() -> dict:
+    return {
+        "quote_id": "lq_001",
+        "extraction_id": "invext_001",
+        "source_type": "official_portal",
+        "captured_at": "2026-03-10T09:22:00Z",
+        "sources": [
+            {
+                "source_url": "https://local.example/charges",
+                "retrieved_at": "2026-03-10T09:21:00Z",
+                "method": "web_extract",
+            }
+        ],
+    }
+
+
 def test_assemble_source_trail_includes_urls_timestamps_types_and_discovery_channel() -> None:
     parsed_results = {
         "freight": _parsed_result("freight", _freight_payload()),
         "customs": _parsed_result("customs", _customs_payload()),
         "fx": _parsed_result("fx", _fx_payload()),
+        "local_charges": _parsed_result("local_charges", _local_charges_payload()),
     }
 
     trail = assemble_source_trail(parsed_results, assembled_at="2026-03-11T12:00:00Z")
 
     assert trail.extraction_id == "invext_001"
     assert trail.assembled_at == "2026-03-11T12:00:00Z"
-    assert len(trail.entries) == 4
+    assert len(trail.entries) == 5
 
     freight_entry = next(entry for entry in trail.entries if entry.task_type == "freight")
     customs_entry = next(entry for entry in trail.entries if entry.task_type == "customs")
     fx_entries = [entry for entry in trail.entries if entry.task_type == "fx"]
+    local_entry = next(entry for entry in trail.entries if entry.task_type == "local_charges")
 
     assert freight_entry.source_url == "https://freight.example/quotes/1"
     assert freight_entry.retrieved_at == "2026-03-10T08:55:00Z"
@@ -108,16 +128,18 @@ def test_assemble_source_trail_includes_urls_timestamps_types_and_discovery_chan
 
     assert {entry.source_type for entry in fx_entries} == {"official_rate", "parallel_rate"}
     assert {entry.discovery_channel for entry in fx_entries} == {"official_portal", "open_web"}
+    assert local_entry.discovery_channel == "official_portal"
 
     mapping = trail.as_mapping()
     assert mapping["extraction_id"] == "invext_001"
-    assert len(mapping["entries"]) == 4
+    assert len(mapping["entries"]) == 5
 
 
 def test_assemble_source_trail_fails_when_required_task_is_missing() -> None:
     parsed_results = {
         "freight": _parsed_result("freight", _freight_payload()),
         "customs": _parsed_result("customs", _customs_payload()),
+        "local_charges": _parsed_result("local_charges", _local_charges_payload()),
     }
 
     with pytest.raises(SourceTrailError):
@@ -131,6 +153,7 @@ def test_assemble_source_trail_fails_on_mismatched_extraction_ids() -> None:
         "freight": _parsed_result("freight", _freight_payload()),
         "customs": _parsed_result("customs", customs_payload),
         "fx": _parsed_result("fx", _fx_payload()),
+        "local_charges": _parsed_result("local_charges", _local_charges_payload()),
     }
 
     with pytest.raises(SourceTrailError):
@@ -144,6 +167,7 @@ def test_assemble_source_trail_fails_on_unsupported_source_type() -> None:
         "freight": _parsed_result("freight", _freight_payload()),
         "customs": _parsed_result("customs", customs_payload),
         "fx": _parsed_result("fx", _fx_payload()),
+        "local_charges": _parsed_result("local_charges", _local_charges_payload()),
     }
 
     with pytest.raises(SourceTrailError):

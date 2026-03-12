@@ -42,12 +42,15 @@ def _base_input() -> dict:
         "fx_quote_currency": "NGN",
         "fx_selected_rate_type": "parallel",
         "fx_selected_rate": 100,
+        "local_charges_currency": "NGN",
+        "local_charges_amount": 0,
         "local_currency": "NGN",
         "profit_margin_pct": 20,
         "quote_ids": {
             "freight_quote_id": "fq_001",
             "customs_quote_id": "cq_001",
             "fx_quote_id": "xq_001",
+            "local_charges_quote_id": "lq_001",
         },
         "requested_at": "2026-03-10T00:00:00Z",
     }
@@ -71,9 +74,10 @@ def test_calculate_landed_cost_returns_expected_contract_values() -> None:
         "invoice_local": 100000.0,
         "freight_local": 20000.0,
         "customs_local": 18000.0,
+        "local_charges_local": 0.0,
         "margin_local": 27600.0,
     }
-    assert output["source_quote_ids"] == ["fq_001", "cq_001", "xq_001"]
+    assert output["source_quote_ids"] == ["fq_001", "cq_001", "xq_001", "lq_001"]
     assert (
         output["disclaimer"]
         == "Estimates only, subject to final customs assessment and market fluctuations."
@@ -116,6 +120,7 @@ def test_calculate_landed_cost_handles_null_weight_and_mixed_fixed_fee_currencie
     assert output["total_landed_cost"] == 7727.5
     assert output["cost_per_unit"] is None
     assert output["breakdown"]["customs_local"] == 1025.0
+    assert output["breakdown"]["local_charges_local"] == 0.0
 
 
 def test_calculate_landed_cost_fails_on_unsupported_fixed_fee_currency() -> None:

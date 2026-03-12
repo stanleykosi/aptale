@@ -61,7 +61,7 @@ def _user_profile() -> dict:
     }
 
 
-def test_build_sourcing_tasks_produces_three_exhaustive_tasks() -> None:
+def test_build_sourcing_tasks_produces_five_exhaustive_tasks() -> None:
     tasks = build_sourcing_tasks(
         invoice_extraction=_base_invoice_extraction(),
         local_currency="NGN",
@@ -71,11 +71,19 @@ def test_build_sourcing_tasks_produces_three_exhaustive_tasks() -> None:
         subagent_model="google/gemini-flash-2.0",
     )
 
-    assert len(tasks) == 3
-    assert [task["task_type"] for task in tasks] == ["freight", "customs", "fx"]
+    assert len(tasks) == 5
+    assert [task["task_type"] for task in tasks] == [
+        "freight",
+        "customs",
+        "fx",
+        "local_charges",
+        "risk_notes",
+    ]
     assert tasks[0]["toolsets"] == ["browser", "web"]
     assert tasks[1]["toolsets"] == ["browser", "web"]
     assert tasks[2]["toolsets"] == ["web"]
+    assert tasks[3]["toolsets"] == ["browser", "web"]
+    assert tasks[4]["toolsets"] == ["web"]
     assert all(task["model"] == "google/gemini-flash-2.0" for task in tasks)
 
     for task in tasks:
@@ -121,4 +129,3 @@ def test_build_sourcing_tasks_fails_without_default_margin() -> None:
             extraction_status="validated",
             route_status="route_resolved",
         )
-

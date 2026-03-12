@@ -91,6 +91,13 @@ def build_landed_cost_csv_rows(payload: Mapping[str, Any]) -> list[dict[str, str
         ),
         _row(
             row_type="breakdown",
+            row_key="local_charges_local",
+            label="Local Charges (Local)",
+            currency=currency,
+            amount=_format_amount(breakdown["local_charges_local"], places=2),
+        ),
+        _row(
+            row_type="breakdown",
             row_key="margin_local",
             label="Margin (Local)",
             currency=currency,

@@ -27,13 +27,21 @@ Required keys:
 Optional keys for Hermes runtime unification with Aptale codebase:
 
 - `APTALE_QUOTE_LOOP_ENABLED=true`
+- `APTALE_SCOPE_ENFORCE=false` (recommended for seamless shipping-assistant behavior)
 - `APTALE_REPO_ROOT=/absolute/path/to/aptale`
+- `APTALE_HERMES_BRIDGE_PATCH=true`
+- `MESSAGING_CWD=/absolute/path/to/aptale`
 - `APTALE_DEFAULT_COUNTRY=NG`
 - `APTALE_DEFAULT_CURRENCY=NGN`
 - `APTALE_DEFAULT_MARGIN_PCT=18`
 - `APTALE_DEFAULT_TIMEZONE=Africa/Lagos`
 - `APTALE_EXPORT_FORMAT=pdf|csv`
 - `APTALE_EXPORT_OUTPUT_DIR=/absolute/path/to/.hermes/runtime/exports`
+- `APTALE_LOCAL_STT_ENABLED=true` (recommended; enables local voice-note transcription)
+- `APTALE_STT_PROVIDER=local` (canonical for OpenAI-free STT on WhatsApp voice notes)
+- `APTALE_STT_MODEL=small`
+- `APTALE_STT_DEVICE=auto`
+- `APTALE_STT_COMPUTE_TYPE=int8`
 
 ## 2) Pair the Bot Number
 
@@ -55,7 +63,7 @@ During pairing:
 Foreground:
 
 ```bash
-hermes gateway
+./scripts/start_gateway.sh
 ```
 
 Service install path:

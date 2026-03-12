@@ -37,6 +37,12 @@ def render_source_failure(failure: SourcingLegFailure) -> str:
             f"{bold('Failed leg')}: {leg}",
             f"{bold('Reason')}: {reason}",
             f"{bold('Detail')}: {_clean_detail(failure.detail)}",
+            f"{bold('Retry Attempt')}: {failure.retry_attempt}",
+            f"{bold('Source Strategy')}: {failure.source_strategy}",
+            (
+                f"{bold('Alternate Sources')}: "
+                f"{'Switched to alternate sources' if failure.switched_to_alternate_sources else 'Primary source path'}"
+            ),
             f"{bold('Open-web search path')}: {'Available' if failure.can_switch_to_open_web_search else 'Not available'}",
         ]
     )
@@ -60,7 +66,9 @@ def render_source_failures(failures: list[SourcingLegFailure]) -> str:
         leg = _LEG_LABELS.get(failure.task_type, failure.task_type.upper())
         availability = "available" if failure.can_switch_to_open_web_search else "not available"
         items.append(
-            f"{leg}: {_FAILURE_REASON[failure.code]} Open-web switch {availability}."
+            f"{leg}: {_FAILURE_REASON[failure.code]} "
+            f"attempt={failure.retry_attempt}, strategy={failure.source_strategy}. "
+            f"Open-web switch {availability}."
         )
 
     return join_sections(

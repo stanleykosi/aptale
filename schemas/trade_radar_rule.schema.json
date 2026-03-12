@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aptale/schemas/trade_radar_rule.schema.json",
+  "title": "TradeRadarRule",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "alert_id",
+    "user_id",
+    "hs_code",
+    "origin_country",
+    "destination_country",
+    "schedule_cron",
+    "timezone",
+    "deliver",
+    "active",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "alert_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "user_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hs_code": {
+      "type": "string",
+      "pattern": "^[0-9]{4,10}$"
+    },
+    "origin_country": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$"
+    },
+    "destination_country": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$"
+    },
+    "schedule_cron": {
+      "type": "string",
+      "minLength": 9
+    },
+    "timezone": {
+      "type": "string",
+      "minLength": 3
+    },
+    "deliver": {
+      "type": "string",
+      "enum": [
+        "origin"
+      ]
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

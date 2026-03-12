@@ -88,14 +88,21 @@ def test_handle_posts_to_webhook_on_alert(monkeypatch: pytest.MonkeyPatch) -> No
     assert captured["payload"]["reason"] == "whatsapp_not_connected_on_startup"
 
 
-def test_handle_fails_fast_if_webhook_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_handle_skips_if_webhook_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _load_hook_module()
     monkeypatch.delenv("ADMIN_ALERT_WEBHOOK_URL", raising=False)
+    captured = {"called": False}
 
-    with pytest.raises(RuntimeError):
-        asyncio.run(
-            module.handle(
-                "session:start",
-                {"platform": "whatsapp", "reason": "connection closed"},
-            )
+    def _fake_post(*, payload, webhook_url, timeout=5):  # type: ignore[no-untyped-def]
+        captured["called"] = True
+        return 200
+
+    monkeypatch.setattr(module, "post_admin_alert", _fake_post)
+
+    asyncio.run(
+        module.handle(
+            "session:start",
+            {"platform": "whatsapp", "reason": "connection closed"},
         )
+    )
+    assert captured["called"] is False

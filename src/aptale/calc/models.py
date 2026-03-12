@@ -49,6 +49,7 @@ class QuoteIDsModel:
     freight_quote_id: str
     customs_quote_id: str
     fx_quote_id: str
+    local_charges_quote_id: str
 
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> QuoteIDsModel:
@@ -56,10 +57,16 @@ class QuoteIDsModel:
             freight_quote_id=str(data["freight_quote_id"]),
             customs_quote_id=str(data["customs_quote_id"]),
             fx_quote_id=str(data["fx_quote_id"]),
+            local_charges_quote_id=str(data["local_charges_quote_id"]),
         )
 
     def as_list(self) -> list[str]:
-        return [self.freight_quote_id, self.customs_quote_id, self.fx_quote_id]
+        return [
+            self.freight_quote_id,
+            self.customs_quote_id,
+            self.fx_quote_id,
+            self.local_charges_quote_id,
+        ]
 
 
 @dataclass(frozen=True)
@@ -77,6 +84,8 @@ class LandedCostInputModel:
     fx_quote_currency: str
     fx_selected_rate_type: str
     fx_selected_rate: float
+    local_charges_currency: str
+    local_charges_amount: float
     local_currency: str
     profit_margin_pct: float
     quote_ids: QuoteIDsModel
@@ -103,6 +112,8 @@ class LandedCostInputModel:
             fx_quote_currency=str(data["fx_quote_currency"]),
             fx_selected_rate_type=str(data["fx_selected_rate_type"]),
             fx_selected_rate=float(data["fx_selected_rate"]),
+            local_charges_currency=str(data["local_charges_currency"]),
+            local_charges_amount=float(data["local_charges_amount"]),
             local_currency=str(data["local_currency"]),
             profit_margin_pct=float(data["profit_margin_pct"]),
             quote_ids=QuoteIDsModel.from_mapping(data["quote_ids"]),
@@ -117,6 +128,7 @@ class LandedCostBreakdownModel:
     invoice_local: float
     freight_local: float
     customs_local: float
+    local_charges_local: float
     margin_local: float
 
     def as_mapping(self) -> dict[str, float]:
@@ -124,6 +136,7 @@ class LandedCostBreakdownModel:
             "invoice_local": self.invoice_local,
             "freight_local": self.freight_local,
             "customs_local": self.customs_local,
+            "local_charges_local": self.local_charges_local,
             "margin_local": self.margin_local,
         }
 
