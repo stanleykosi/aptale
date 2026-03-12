@@ -24,6 +24,17 @@ Required keys:
 - `WHATSAPP_MODE=bot`
 - `WHATSAPP_ALLOWED_USERS=<comma-separated E.164-style numbers without +>`
 
+Optional keys for Hermes runtime unification with Aptale codebase:
+
+- `APTALE_QUOTE_LOOP_ENABLED=true`
+- `APTALE_REPO_ROOT=/absolute/path/to/aptale`
+- `APTALE_DEFAULT_COUNTRY=NG`
+- `APTALE_DEFAULT_CURRENCY=NGN`
+- `APTALE_DEFAULT_MARGIN_PCT=18`
+- `APTALE_DEFAULT_TIMEZONE=Africa/Lagos`
+- `APTALE_EXPORT_FORMAT=pdf|csv`
+- `APTALE_EXPORT_OUTPUT_DIR=/absolute/path/to/.hermes/runtime/exports`
+
 ## 2) Pair the Bot Number
 
 Run:

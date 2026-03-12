@@ -62,12 +62,14 @@ def render_extraction_summary(extraction_payload: Mapping[str, Any]) -> str:
     if uncertainties:
         sections.append(section("Needs Confirmation", bullets(uncertainties)))
 
+    example_destination = 'destination_port = "Tin Can Island"'
+    example_hs_code = 'items[0].hs_code = "851712"'
     corrections_guidance = numbered(
         [
             f"Reply {code_inline(CONFIRMATION_PHRASE)} to proceed.",
             "Or send corrections using a field path and value.",
-            f"Example: {code_inline('destination_port = \"Tin Can Island\"')}",
-            f"Example: {code_inline('items[0].hs_code = \"851712\"')}",
+            f"Example: {code_inline(example_destination)}",
+            f"Example: {code_inline(example_hs_code)}",
         ]
     )
     sections.append(section("Next Step", corrections_guidance))
@@ -98,4 +100,3 @@ def _route_text(payload: Mapping[str, Any]) -> str:
         f"{origin_country} ({origin_port}) -> "
         f"{destination_country} ({destination_port})"
     )
-

@@ -1,5 +1,5 @@
 model:
-  default: gemini-3-flash
+  default: gpt-5.3-codex
 toolsets:
 - hermes-cli
 max_turns: 100
