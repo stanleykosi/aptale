@@ -78,6 +78,8 @@ def _load_model(*, model_name: str, device: str, compute_type: str) -> Any:
     cached = _MODEL_CACHE.get(cache_key)
     if cached is not None:
         return cached
+    # Reduce benign onnxruntime warning noise on CPU-only hosts.
+    os.environ.setdefault("ORT_LOG_SEVERITY_LEVEL", "3")
     try:
         from faster_whisper import WhisperModel
     except ImportError as exc:

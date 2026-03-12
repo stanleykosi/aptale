@@ -20,6 +20,7 @@ from typing import Any, Mapping
 logger = logging.getLogger(__name__)
 
 _PATCHED_ATTR = "_aptale_bridge_patch_v2"
+_WA_VOICE_PATCH_ATTR = "_aptale_whatsapp_send_voice_patch_v1"
 _TRUE_VALUES = {"1", "true", "yes", "on"}
 _TRACK_HS_RE = re.compile(r"\btrack\b", re.IGNORECASE)
 _HS_RE = re.compile(r"\bhs\s*[0-9]{4,10}\b", re.IGNORECASE)
@@ -31,6 +32,9 @@ def install_patch() -> None:
     if not _is_truthy(os.getenv("APTALE_HERMES_BRIDGE_PATCH", "")):
         return
 
+    # Ensure WhatsApp send_voice uses native media transport (not text fallback).
+    install_whatsapp_send_voice_patch()
+
     try:
         import gateway.run as gateway_run
     except Exception as exc:  # pragma: no cover - runtime-only path
@@ -38,6 +42,41 @@ def install_patch() -> None:
         return
 
     apply_patch_to_gateway_module(gateway_run)
+
+
+def install_whatsapp_send_voice_patch() -> bool:
+    """Patch Hermes WhatsApp adapter to send voice/audio natively."""
+    try:
+        import gateway.platforms.whatsapp as whatsapp_platform
+    except Exception as exc:  # pragma: no cover - runtime-only path
+        logger.debug("Aptale WhatsApp send_voice patch skipped: %s", exc)
+        return False
+
+    adapter_cls = getattr(whatsapp_platform, "WhatsAppAdapter", None)
+    if adapter_cls is None:
+        return False
+    if getattr(adapter_cls, _WA_VOICE_PATCH_ATTR, False):
+        return True
+
+    original_send_voice = getattr(adapter_cls, "send_voice", None)
+
+    async def _send_voice_native(self: Any, chat_id: str, audio_path: str, caption: str | None = None, reply_to: str | None = None) -> Any:
+        try:
+            return await self._send_media_to_bridge(chat_id, audio_path, "audio", caption)
+        except Exception:
+            if callable(original_send_voice):
+                return await original_send_voice(
+                    self,
+                    chat_id=chat_id,
+                    audio_path=audio_path,
+                    caption=caption,
+                    reply_to=reply_to,
+                )
+            raise
+
+    setattr(adapter_cls, "send_voice", _send_voice_native)
+    setattr(adapter_cls, _WA_VOICE_PATCH_ATTR, True)
+    return True
 
 
 def apply_patch_to_gateway_module(gateway_run: ModuleType | Any) -> bool:
@@ -50,6 +89,8 @@ def apply_patch_to_gateway_module(gateway_run: ModuleType | Any) -> bool:
 
     if getattr(gateway_runner, _PATCHED_ATTR, False):
         return True
+
+    original_handle_message = getattr(gateway_runner, "_handle_message", None)
 
     quote_terms = tuple(getattr(gateway_run, "_APTALE_QUOTE_INTENT_TERMS", ()))
     domain_terms = tuple(getattr(gateway_run, "_APTALE_DOMAIN_INTENT_TERMS", ()))
@@ -287,12 +328,50 @@ def apply_patch_to_gateway_module(gateway_run: ModuleType | Any) -> bool:
             return None
         return self._format_aptale_dispatch_response(dispatch)
 
+    async def _handle_message_with_audio_reply(self: Any, event: Any) -> str | None:
+        if not callable(original_handle_message):
+            return None
+
+        response = await original_handle_message(self, event)
+        if not isinstance(response, str) or not response.strip():
+            return response
+        if "MEDIA:" in response:
+            return response
+        if "[[audio_as_voice]]" in response:
+            return response
+        if event.source.platform != platform.WHATSAPP:
+            return response
+        if not _is_truthy(os.getenv("APTALE_AUDIO_IN_AUDIO_OUT", "true")):
+            return response
+        if not _event_has_audio_payload(event=event, message_type=message_type):
+            return response
+
+        mode = str(os.getenv("APTALE_AUDIO_REPLY_MODE", "audio_only") or "").strip().lower()
+        voice_attachment = _synthesize_voice_reply_attachment(event=event, text=response)
+        if not isinstance(voice_attachment, Mapping):
+            return response
+        audio_path = str(voice_attachment.get("path") or "").strip()
+        if not audio_path:
+            return response
+
+        voice_prefix = (
+            "[[audio_as_voice]]\n"
+            if bool(voice_attachment.get("audio_as_voice"))
+            else ""
+        )
+        media_line = f"{voice_prefix}MEDIA:{audio_path}"
+        if mode in {"audio_plus_text", "both", "text_and_audio"}:
+            return f"{response}\n{media_line}"
+        return media_line
+
     gateway_runner._build_aptale_event_payload = staticmethod(_build_aptale_event_payload)
     gateway_runner._classify_aptale_intent = _classify_aptale_intent
     gateway_runner._format_aptale_dispatch_response = staticmethod(
         _format_aptale_dispatch_response
     )
     gateway_runner._run_aptale_quote_loop_bridge = _run_aptale_quote_loop_bridge
+    if callable(original_handle_message):
+        gateway_runner._handle_message = _handle_message_with_audio_reply
     setattr(gateway_runner, _PATCHED_ATTR, True)
     return True
 
@@ -309,7 +388,7 @@ def _looks_like_trade_radar_intent(text: str) -> bool:
         return False
     if _HS_RE.search(candidate) is None:
         return False
-    return ("->" in candidate) or (" to " in candidate)
+    return ("->" in candidate) or (" to " in candidate) or (" from " in candidate)
 
 
 def _event_has_audio_payload(*, event: Any, message_type: Any) -> bool:
@@ -340,3 +419,43 @@ def _event_has_audio_payload(*, event: Any, message_type: Any) -> bool:
         ):
             return True
     return False
+
+
+def _synthesize_voice_reply_attachment(*, event: Any, text: str) -> Mapping[str, Any] | None:
+    cleaned = str(text or "").strip()
+    if not cleaned:
+        return None
+    try:
+        from tools.tts_tool import text_to_speech_tool
+    except Exception as exc:
+        logger.debug("Aptale audio-out TTS unavailable: %s", exc)
+        return None
+
+    try:
+        os.environ["HERMES_SESSION_PLATFORM"] = str(getattr(event.source.platform, "value", ""))
+        os.environ["HERMES_SESSION_CHAT_ID"] = str(getattr(event.source, "chat_id", "") or "")
+        os.environ["HERMES_SESSION_KEY"] = str(getattr(event.source, "chat_id", "") or "")
+        chat_name = getattr(event.source, "chat_name", None)
+        if isinstance(chat_name, str) and chat_name.strip():
+            os.environ["HERMES_SESSION_CHAT_NAME"] = chat_name.strip()
+    except Exception:
+        pass
+
+    try:
+        raw = text_to_speech_tool(cleaned)
+        payload = json.loads(raw)
+    except Exception as exc:
+        logger.debug("Aptale audio-out TTS failed: %s", exc)
+        return None
+    if not bool(payload.get("success")):
+        return None
+
+    file_path = str(payload.get("file_path") or "").strip()
+    if not file_path:
+        return None
+    media_tag = str(payload.get("media_tag") or "")
+    return {
+        "type": "audio",
+        "path": file_path,
+        "audio_as_voice": "[[audio_as_voice]]" in media_tag,
+    }

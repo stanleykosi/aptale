@@ -522,3 +522,21 @@ def test_trade_radar_audio_request_returns_voice_reply() -> None:
     assert result.status == "trade_radar_scheduled"
     assert result.user_message is None
     assert any(item.get("path") == "/tmp/radar.ogg" for item in result.attachments)
+
+
+def test_trade_radar_detects_from_to_text_without_arrow() -> None:
+    adapter = HermesWhatsAppQuoteAdapter(
+        session_store=InMemoryQuoteLoopSessionStore(),
+    )
+
+    result = adapter.handle_event(
+        {"user_id": "2348011111111", "text": "Track HS 850440 from China to Nigeria, alert me daily 8am"},
+        multimodal_extractor=_fake_multimodal_extractor,
+        delegate_task_runner=lambda tasks: {},
+        user_profile=_user_profile(),
+        now_fn=_fixed_now,
+        schedule_cronjob=lambda **_: {"job_id": "job-1", "status": "scheduled"},
+    )
+
+    assert result.handled is True
+    assert result.status == "trade_radar_scheduled"

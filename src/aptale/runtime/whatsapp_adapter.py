@@ -605,7 +605,7 @@ def _looks_like_trade_radar_intent(text: str) -> bool:
         return False
     if not re.search(r"\bhs\s*[0-9]{4,10}\b", candidate):
         return False
-    if not ("->" in candidate or " to " in candidate):
+    if not ("->" in candidate or " to " in candidate or " from " in candidate):
         return False
     return True
 
