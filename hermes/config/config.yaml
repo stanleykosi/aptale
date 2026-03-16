@@ -1,8 +1,9 @@
 model:
-  default: gpt-5.3-codex
+  default: openrouter/hunter-alpha
+  provider: openrouter
 toolsets:
 - hermes-cli
-max_turns: 100
+max_turns: 90
 terminal:
   backend: local
   cwd: .
@@ -36,6 +37,7 @@ display:
   personality: kawaii
   resume_display: full
   bell_on_complete: false
+  tool_progress: all
 tts:
   provider: edge
   edge:
@@ -65,3 +67,4 @@ command_allowlist: []
 _config_version: 5
 code_execution:
   timeout: 300
+session_reset: {}
